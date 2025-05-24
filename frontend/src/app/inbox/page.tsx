@@ -23,7 +23,7 @@ export default async function InboxBasePage({ searchParams }: { searchParams?: {
         </Alert>
       )}
       {/* Changed to flex h-full to make columns take full height */}
-      <div className="flex h-full"> 
+      <div className="flex h-full">
         {/* Left Column: Email List */}
         <div className="w-full md:w-1/3 border-r flex flex-col bg-card md:mr-6"> {/* Added md:mr-6 */}
           <div className="p-4 md:p-6 border-b shrink-0"> {/* Adjusted padding for vertical alignment */}

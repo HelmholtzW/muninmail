@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import List, Optional
+
+from pydantic import BaseModel
 
 
 # Pydantic models for request/response
@@ -69,9 +70,16 @@ class FetchEmailResponseItem(BaseModel):
     timestamp: str
     attachments: Optional[List[str]] = None
 
+
+class FetchProcessedEmailResponseItem(FetchEmailResponseItem):
+    summary: str
+    flags: List[Flag]
+
+
 class FetchEmailsResponse(BaseModel):
-    emails: List[FetchEmailResponseItem]
+    emails: List[FetchProcessedEmailResponseItem]
     total_count: int
+
 
 # Email Sending
 class SendEmailRequest(BaseModel):
@@ -79,6 +87,7 @@ class SendEmailRequest(BaseModel):
     recipient: str
     subject: str
     body: str
+
 
 class SendEmailResponse(BaseModel):
     success: bool

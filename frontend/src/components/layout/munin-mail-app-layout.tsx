@@ -13,7 +13,7 @@ export function MuninMailAppLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       {/* This div creates the main horizontal layout: (Central Content + Chat) | TodosPanel */}
       <div className="flex flex-1 h-screen max-h-screen overflow-hidden">
-        
+
         {/* This div is the Central Column: Header, Main Content (SidebarInset), Chat Panel */}
         <div className="flex flex-col flex-1 min-w-0"> {/* Added min-w-0 to prevent flex item from growing too large and pushing out TodosPanel */}
           <AppHeader />
@@ -27,7 +27,7 @@ export function MuninMailAppLayout({ children }: { children: ReactNode }) {
 
         {/* This is the Right Column: Todos Panel */}
         <TodosPanel /> {/* Todos panel manages its own open/close state */}
-      
+
       </div>
       <Toaster />
     </SidebarProvider>

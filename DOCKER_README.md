@@ -181,4 +181,4 @@ Data persists between container restarts unless volumes are explicitly removed.
 3. **Database changes** require migration: `docker-compose exec backend alembic revision --autogenerate -m "description"`
 4. **Apply migrations**: `docker-compose exec backend alembic upgrade head`
 
-This setup provides a complete development and testing environment for your smart email client! 🎉 
+This setup provides a complete development and testing environment for your smart email client! 🎉

@@ -1,6 +1,17 @@
 import type { Email } from '@/lib/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// Function to get the appropriate API URL based on context
+function getApiUrl(): string {
+  // Check if we're running on the server side (Node.js environment)
+  if (typeof window === 'undefined') {
+    // Server-side: use internal Docker network URL
+    return process.env.API_INTERNAL_URL || 'http://backend:8000';
+  }
+  // Client-side: use the public API URL that the browser can access
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
+
+const API_BASE_URL = getApiUrl();
 
 export async function getEmails(): Promise<Email[]> {
   try {
@@ -21,7 +32,7 @@ export async function getEmails(): Promise<Email[]> {
 
 export async function getEmailById(id: string): Promise<Email | undefined> {
   try {
-    const response = await fetch(`${API_BASE_URL}/emails/${id}`);
+    const response = await fetch(`${getApiUrl()}/emails/${id}`);
     if (!response.ok) {
       if (response.status === 404) {
         return undefined;
@@ -40,7 +51,7 @@ export async function getEmailById(id: string): Promise<Email | undefined> {
 
 export async function sendEmail(data: { sender: string; recipient: string; subject: string; body: string }): Promise<Email> {
   try {
-    const response = await fetch(`${API_BASE_URL}/send_email`, {
+    const response = await fetch(`${getApiUrl()}/send_email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

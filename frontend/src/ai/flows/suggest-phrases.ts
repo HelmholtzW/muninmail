@@ -1,7 +1,7 @@
 // EmailSentimentAnalyzerTool
 'use server';
 /**
- * @fileOverview Suggest phrases to include in emails to avoid sounding passive-aggressive. 
+ * @fileOverview Suggest phrases to include in emails to avoid sounding passive-aggressive.
  *
  * - suggestPhrases - A function that handles the email phrases suggestion process.
  * - SuggestPhrasesInput - The input type for the suggestPhrases function.

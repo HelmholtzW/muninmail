@@ -30,7 +30,7 @@ export function EmailComposer() {
   const { toast } = useToast();
   const initialState: SendEmailFormState = { message: '', success: false };
   const [formState, formAction] = useFormState(handleSendEmail, initialState);
-  
+
   const [emailBody, setEmailBody] = useState('');
   const [recipient, setRecipient] = useState('');
   const [subject, setSubject] = useState('');
@@ -91,7 +91,7 @@ export function EmailComposer() {
     if (score > 0.33) return 'text-green-500'; // Positive
     return 'text-yellow-500'; // Neutral
   };
-  
+
   const getSentimentProgressValue = (score: number) => {
     // Convert score from -1 to 1 range to 0 to 100 range
     return (score + 1) * 50;
@@ -108,26 +108,26 @@ export function EmailComposer() {
         <CardContent className="p-6 space-y-6">
           <div className="space-y-2">
             <Label htmlFor="recipient">To</Label>
-            <Input 
-              id="recipient" 
-              name="recipient" 
-              type="email" 
-              placeholder="recipient@example.com" 
+            <Input
+              id="recipient"
+              name="recipient"
+              type="email"
+              placeholder="recipient@example.com"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              required 
+              required
             />
             {formState.errors?.recipient && <p className="text-sm text-destructive">{formState.errors.recipient.join(', ')}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
-            <Input 
-              id="subject" 
-              name="subject" 
-              placeholder="Email Subject" 
+            <Input
+              id="subject"
+              name="subject"
+              placeholder="Email Subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              required 
+              required
             />
             {formState.errors?.subject && <p className="text-sm text-destructive">{formState.errors.subject.join(', ')}</p>}
           </div>

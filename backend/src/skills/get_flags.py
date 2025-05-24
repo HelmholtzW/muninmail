@@ -1,7 +1,9 @@
-from litellm import completion
-from ..models import Flag, GetFlagsResponse, EmailContent
-from typing import List
 import os
+from typing import List
+
+from litellm import completion
+
+from ..models import EmailContent, Flag, GetFlagsResponse
 
 PROMPT_TEMPLATE = """
 You are a helpful assistant that flags emails based on the content.

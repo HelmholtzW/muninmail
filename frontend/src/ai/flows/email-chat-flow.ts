@@ -71,11 +71,11 @@ If a user asks for actions you cannot perform (like accessing their live email d
     });
 
     const aiResponse = response.choices[0]?.message?.content;
-    
+
     if (!aiResponse) {
       console.error('AI response was empty for input:', validatedInput);
-      return { 
-        aiResponse: "I'm sorry, I encountered an issue processing your request. Could you please try rephrasing or ask something else?" 
+      return {
+        aiResponse: "I'm sorry, I encountered an issue processing your request. Could you please try rephrasing or ask something else?"
       };
     }
 
@@ -84,8 +84,8 @@ If a user asks for actions you cannot perform (like accessing their live email d
     return EmailChatOutputSchema.parse(result);
   } catch (error) {
     console.error('Error calling OpenAI API:', error);
-    return { 
-      aiResponse: "I'm sorry, I encountered an issue processing your request. Could you please try rephrasing or ask something else?" 
+    return {
+      aiResponse: "I'm sorry, I encountered an issue processing your request. Could you please try rephrasing or ask something else?"
     };
   }
 }

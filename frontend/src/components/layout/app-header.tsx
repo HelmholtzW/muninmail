@@ -14,7 +14,7 @@ export function AppHeader() {
         <Mail className="h-6 w-6 text-primary" />
         <span className="sr-only sm:not-sr-only">MuninMail</span>
       </Link>
-      
+
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggleButton />
         {/* Add User Menu or other header items here if needed */}

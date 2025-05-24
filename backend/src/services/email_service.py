@@ -1,13 +1,15 @@
-import imaplib
-import smtplib
-import os
-from dotenv import load_dotenv
-from email.mime.text import MIMEText
-from email.header import decode_header
-from email.utils import parsedate_to_datetime
-from typing import List, Dict, Any, Optional
-from ..models import FetchEmailResponseItem
 import email
+import imaplib
+import os
+import smtplib
+from email.header import decode_header
+from email.mime.text import MIMEText
+from email.utils import parsedate_to_datetime
+from typing import List, Optional
+
+from dotenv import load_dotenv
+
+from ..models import FetchEmailResponseItem
 
 load_dotenv()
 
@@ -156,6 +158,7 @@ def send_email(sender: str, recipient: str, subject: str, body: str) -> bool:
         print(f"Error sending email: {e}")
         return False
 
+
 def fetch_email_by_id(email_id: str) -> FetchEmailResponseItem:
     """Fetches a specific email by ID."""
     return FetchEmailResponseItem(
@@ -167,7 +170,8 @@ def fetch_email_by_id(email_id: str) -> FetchEmailResponseItem:
         timestamp="2021-01-01T00:00:00Z",
     )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example usage (for testing purposes)
     print("Fetching emails...")
     retrieved_emails: List[FetchEmailResponseItem] = fetch_emails()

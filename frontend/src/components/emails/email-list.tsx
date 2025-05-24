@@ -18,7 +18,7 @@ export function EmailList({ emails, selectedEmailId }: EmailListProps) {
 
   return (
     // Removed space-y classes, item margins will handle spacing
-    <div> 
+    <div>
       {emails.map((email) => (
         <EmailListItem key={email.id} email={email} isActive={email.id === selectedEmailId} />
       ))}

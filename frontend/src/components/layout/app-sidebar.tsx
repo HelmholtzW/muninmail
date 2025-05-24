@@ -28,7 +28,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r">
-      <SidebarHeader 
+      <SidebarHeader
         className={cn(
           "p-2 flex items-center",
           open ? "justify-start" : "justify-center" // Adjusted justification
@@ -92,4 +92,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-

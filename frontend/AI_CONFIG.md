@@ -47,7 +47,7 @@ The `OPENAI_MODEL` environment variable allows you to configure which model to u
 All AI functions will automatically use the configured endpoint and model:
 
 - Email sentiment analysis
-- Phrase suggestions  
+- Phrase suggestions
 - Chat assistant
 
 The client is configured in `src/ai/client.ts` and will use the environment variables automatically.
@@ -90,4 +90,4 @@ The AI client includes robust error handling:
 To test your configuration:
 1. Check the browser console for configuration logs
 2. Try the email sentiment analysis feature
-3. Use the chat assistant to verify connectivity 
+3. Use the chat assistant to verify connectivity

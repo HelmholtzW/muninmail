@@ -18,12 +18,12 @@ export function EmailListItem({ email, isActive }: EmailListItemProps) {
   return (
     <Link href={`/inbox/${email.id}`} className="block hover:no-underline" scroll={false}>
       <Card className={cn(
-        "transition-all duration-150 ease-in-out mb-2 rounded-lg border", 
-        email.read ? 'bg-card/70 dark:bg-card/90' : 'bg-card', 
-        isActive 
-          ? 'border-primary bg-primary/5 dark:bg-primary/20 shadow-md' 
+        "transition-all duration-150 ease-in-out mb-2 rounded-lg border",
+        email.read ? 'bg-card/70 dark:bg-card/90' : 'bg-card',
+        isActive
+          ? 'border-primary bg-primary/5 dark:bg-primary/20 shadow-md'
           : 'hover:bg-accent/50 dark:hover:bg-accent/70 hover:shadow-md',
-        !isActive && !email.read && "font-bold border-primary/30" 
+        !isActive && !email.read && "font-bold border-primary/30"
       )}>
         <CardContent className="p-3 md:p-4">
           <div className="flex justify-between items-start gap-2 md:gap-3">
@@ -36,7 +36,7 @@ export function EmailListItem({ email, isActive }: EmailListItemProps) {
                 {senderName}
               </h3>
               <p className={cn(
-                "text-xs truncate", 
+                "text-xs truncate",
                 isActive ? "text-primary/90" : "text-muted-foreground",
                 !email.read && !isActive && "text-foreground/80"
               )}>

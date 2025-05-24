@@ -1,15 +1,16 @@
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
-    DateTime,
-    Boolean,
-    ForeignKey,
-    JSON,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from .database import Base
 
 
@@ -31,6 +32,12 @@ class Email(Base):
         String, default="pending"
     )  # pending, processing, completed, failed
 
+    # Consolidated fields from EmailSummary and EmailFlag
+    summary = Column(Text, nullable=True)  # Email summary
+    flags = Column(
+        JSON, nullable=True
+    )  # Store flags as JSON array: [{"flag_type": "urgent", "description": "High priority"}]
+
     # Database timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
@@ -38,21 +45,7 @@ class Email(Base):
     )
 
     # Relationships
-    summary = relationship("EmailSummary", back_populates="email", uselist=False)
     todos = relationship("EmailTodo", back_populates="email")
-    flags = relationship("EmailFlag", back_populates="email")
-
-
-class EmailSummary(Base):
-    __tablename__ = "email_summaries"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email_id = Column(Integer, ForeignKey("emails.id"), unique=True)
-    summary = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # Relationship
-    email = relationship("Email", back_populates="summary")
 
 
 class EmailTodo(Base):
@@ -67,16 +60,3 @@ class EmailTodo(Base):
 
     # Relationship
     email = relationship("Email", back_populates="todos")
-
-
-class EmailFlag(Base):
-    __tablename__ = "email_flags"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email_id = Column(Integer, ForeignKey("emails.id"))
-    flag_type = Column(String)
-    description = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    # Relationship
-    email = relationship("Email", back_populates="flags")

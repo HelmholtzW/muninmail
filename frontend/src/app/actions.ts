@@ -53,7 +53,7 @@ export async function handleSendEmail(
     // The client will show a toast based on its own logic or if this redirect is caught.
     // For a cleaner UX, redirect is often preferred after successful form submission.
   } catch (error) {
-    return { 
+    return {
       message: 'Server error: Failed to send email.',
       success: false,
       errors: { general: ['An unexpected error occurred.'] }

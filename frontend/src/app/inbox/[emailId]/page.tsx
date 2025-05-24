@@ -17,7 +17,7 @@ interface EmailPageProps {
 }
 
 export default async function SelectedEmailPage({ params }: EmailPageProps) {
-  
+
   const { emailId } = params;
   const allEmails = await getEmails();
   const selectedEmail = await getEmailById(emailId);
@@ -47,7 +47,7 @@ export default async function SelectedEmailPage({ params }: EmailPageProps) {
             </Button>
         </div>
         {/* Container for EmailDetail, removed p-4 md:p-6 to allow Card's own padding to align */}
-        <div className="overflow-y-auto flex-grow"> 
+        <div className="overflow-y-auto flex-grow">
           {selectedEmail ? (
             <EmailDetail email={selectedEmail} />
           ) : (

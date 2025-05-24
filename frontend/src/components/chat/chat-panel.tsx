@@ -64,11 +64,11 @@ export function ChatPanel() {
         timestamp: msg.timestamp.toISOString()
       }));
 
-      const aiResponse: EmailChatOutput = await chatWithEmailAssistant({ 
+      const aiResponse: EmailChatOutput = await chatWithEmailAssistant({
         userInput: userMessage.text,
-        messageHistory 
+        messageHistory
       });
-      
+
       const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
         sender: 'ai',
@@ -95,7 +95,7 @@ export function ChatPanel() {
   return (
     <Card className={cn(
       "w-full shadow-xl rounded-none border-t flex flex-col bg-card transition-all duration-300 ease-in-out",
-      isExpanded ? "h-80" : "h-auto" 
+      isExpanded ? "h-80" : "h-auto"
     )}>
       <CardHeader className="py-3 px-4 border-b flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center text-card-foreground">
@@ -104,9 +104,9 @@ export function ChatPanel() {
         </CardTitle>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleClearConversation}
               aria-label="Clear conversation"
               className="h-8 w-8"
@@ -133,8 +133,8 @@ export function ChatPanel() {
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`p-3 rounded-lg max-w-[70%] shadow-sm break-words ${
-                        msg.sender === 'user' 
-                          ? 'bg-primary text-primary-foreground' 
+                        msg.sender === 'user'
+                          ? 'bg-primary text-primary-foreground'
                           : 'bg-background border'
                       }`}
                     >

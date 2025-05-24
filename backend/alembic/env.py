@@ -2,9 +2,8 @@ import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
 from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -32,7 +31,6 @@ if config.config_file_name is not None:
 
 # Import our models for autogenerate support
 from src.database import Base
-from src.db_models import Email, EmailSummary, EmailTodo, EmailFlag
 
 # Set target metadata for autogenerate
 target_metadata = Base.metadata

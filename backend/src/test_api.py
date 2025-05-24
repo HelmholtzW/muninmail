@@ -1,13 +1,15 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
-from datetime import datetime
+
 from src.main import app
 from src.models import (
     EmailContent,
-    SummarizeRequest,
     ExtractTodosRequest,
-    GetFlagsRequest,
     Flag,
+    GetFlagsRequest,
+    SummarizeRequest,
 )
 
 # Create test client

@@ -1,26 +1,33 @@
-from typing import List
-from fastapi import FastAPI, HTTPException
 import json
+from typing import List
+
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .database import get_db
+from .db_models import Email
 from .models import (
-    FetchEmailResponseItem,
-    SummarizeRequest,
-    SummarizeResponse,
     ExtractTodosRequest,
     ExtractTodosResponse,
+    FetchEmailResponseItem,
+    FetchEmailsResponse,
     GetFlagsRequest,
     GetFlagsResponse,
-    FetchEmailsResponse,
     SendEmailRequest,
     SendEmailResponse,
+    SummarizeRequest,
+    SummarizeResponse,
 )
 from .services.email_service import (
     fetch_email_by_id,
-    fetch_emails as fetch_emails_service,
+)
+from .services.email_service import (
     send_email as send_email_service,
 )
-from .skills.summarize_email import summarize_email_skill
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
+from .skills.summarize_email import summarize_email_skill
 
 app = FastAPI(
     title="Email Agents API",
@@ -107,13 +114,30 @@ async def get_flags(request: GetFlagsRequest):
 
 
 @app.get("/emails", response_model=FetchEmailsResponse)
-async def get_emails():
-    """Fetches all emails from the postgres database."""
+async def get_emails(db: AsyncSession = Depends(get_db)):
+    """Fetches all processed emails from the postgres database."""
     try:
-        emails = asdf()
-        # Convert Pydantic objects to dictionaries to avoid validation issues
-        email_dicts = [email.model_dump() for email in emails]
-        return FetchEmailsResponse(emails=email_dicts, total_count=len(emails))
+        # Query all emails from the database
+        result = await db.execute(select(Email).where(Email.is_processed == True))
+        emails = result.scalars().all()
+
+        # Convert to response format
+        email_dicts = []
+        for email in emails:
+            email_dict = {
+                "id": email.message_id,
+                "subject": email.subject,
+                "sender": email.sender,
+                "recipient": email.recipient,
+                "body": email.body,
+                "timestamp": email.timestamp.isoformat() if email.timestamp else None,
+                "attachments": email.attachments or [],
+                "summary": email.summary,
+                "flags": email.flags or [],
+            }
+            email_dicts.append(email_dict)
+
+        return FetchEmailsResponse(emails=email_dicts, total_count=len(email_dicts))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching emails: {str(e)}")
 
@@ -122,7 +146,9 @@ async def get_emails():
 async def post_send_email(request: SendEmailRequest):
     """Sends an email using the configured SMTP server."""
     try:
-        success = send_email_service(request.sender, request.recipient, request.subject, request.body)
+        success = send_email_service(
+            request.sender, request.recipient, request.subject, request.body
+        )
         if success:
             return SendEmailResponse(success=True, message="Email sent successfully.")
         else:
@@ -151,8 +177,6 @@ async def get_todos():
         return todos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
-    
-
 
 
 if __name__ == "__main__":

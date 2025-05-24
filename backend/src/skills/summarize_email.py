@@ -1,6 +1,8 @@
-from litellm import completion
-from ..models import SummarizeResponse, EmailContent
 import os
+
+from litellm import completion
+
+from ..models import EmailContent, SummarizeResponse
 
 PROMPT_TEMPLATE = """
 You are a helpful assistant that summarizes emails into one or two sentences.

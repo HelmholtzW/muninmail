@@ -1,17 +1,15 @@
-import json
 import asyncio
+import json
 from datetime import datetime
-from typing import Dict, Any
-from celery import current_task
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict
 
 from ..celery_app import celery_app
 from ..database import AsyncSessionLocal
-from ..db_models import Email, EmailSummary, EmailTodo, EmailFlag
-from ..models import EmailContent, TodoItem, Flag
-from ..skills.summarize_email import summarize_email_skill
+from ..db_models import Email, EmailTodo
+from ..models import EmailContent, Flag
 from ..skills.extract_todos import extract_todos_skill
 from ..skills.get_flags import get_flags_skill
+from ..skills.summarize_email import summarize_email_skill
 
 
 @celery_app.task(bind=True)
@@ -101,10 +99,7 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
 
             # 1. Summarize email
             summary_response = json.loads(summarize_email_skill(email_content))
-            summary_obj = EmailSummary(
-                email_id=email_obj.id, summary=summary_response["summary"]
-            )
-            session.add(summary_obj)
+            email_obj.summary = summary_response["summary"]
 
             if task:
                 task.update_state(state="PROCESSING", meta={"step": "Extracting todos"})
@@ -132,13 +127,16 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
             ]
 
             flags_response = json.loads(get_flags_skill(email_content, available_flags))
+            # Store flags as JSON array in the email object
+            flags_data = []
             for flag_data in flags_response["flags"]:
-                flag_obj = EmailFlag(
-                    email_id=email_obj.id,
-                    flag_type=flag_data["type"],
-                    description=flag_data["description"],
+                flags_data.append(
+                    {
+                        "flag_type": flag_data["type"],
+                        "description": flag_data["description"],
+                    }
                 )
-                session.add(flag_obj)
+            email_obj.flags = flags_data if flags_data else None
 
             # Mark as processed
             email_obj.processing_status = "completed"

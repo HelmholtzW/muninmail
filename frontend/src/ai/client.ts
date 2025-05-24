@@ -19,7 +19,7 @@ function validateConfig() {
   }
 
   console.log(`🤖 Using model: ${model}`);
-  
+
   return { apiKey, baseURL, model };
 }
 
@@ -75,7 +75,7 @@ export async function generateStructuredResponse<T>(
     return JSON.parse(toolCall.function.arguments) as T;
   } catch (error) {
     console.log('Function calling failed, trying fallback approach:', error);
-    
+
     // Fallback: Use regular chat completion with JSON format request
     const fallbackSystemPrompt = `${systemPrompt}
 
@@ -121,10 +121,10 @@ function generateSchemaExample(schema: {
   };
 }): Record<string, unknown> {
   const example: Record<string, unknown> = {};
-  
+
   for (const [key, prop] of Object.entries(schema.parameters.properties)) {
     const propDef = prop as { type: string; enum?: string[]; items?: { type: string } };
-    
+
     if (propDef.enum) {
       example[key] = propDef.enum[0];
     } else if (propDef.type === 'string') {
@@ -139,6 +139,6 @@ function generateSchemaExample(schema: {
       example[key] = null;
     }
   }
-  
+
   return example;
-} 
+}
