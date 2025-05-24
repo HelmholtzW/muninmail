@@ -1,9 +1,9 @@
 from litellm import completion
+from backend.src.models import TodoItem, EmailContent
 import os
-from src.backend.api import SummarizeResponse
 
 PROMPT_TEMPLATE = """
-You are a helpful assistant that summarizes emails into one or two sentences.
+You are a helpful assistant that extracts todo items from an email.
 
 The email is:
 From: {email.sender}
@@ -11,29 +11,40 @@ To: {email.recipient}
 Subject: {email.subject}
 Body: {email.body}
 
-Summarize the email into one or two sentences.
+Extract all the todos for the recipient from the email.
+
+Return the todos in a list of dictionaries with the following keys:
+- task: str
+- priority: str
+- due_date: str
 
 Example:
-"Joe is going to be out of the office next week. Please reach out to John for any urgent matters."
+[
+    {{
+        "task": "Review the project proposal",
+        "priority": "high",
+        "due_date": "2025-05-25"
+    }}
+]
 
-Return the summary in the language of the email.
+Return the list in the language of the email.
 """
 
 
-def summarize(email: str) -> list[str]:
+def extract_todos(email: EmailContent) -> list[str]:
     prompt = PROMPT_TEMPLATE.format(email=email)
     response = completion(
         model="cerebras/qwen-3-32b",
         api_key=os.getenv("CEREBRAS_API_KEY"),
         base_url="https://api.cerebras.ai/v1",
         messages=[{"role": "user", "content": prompt}],
-        response_format=SummarizeResponse,
+        response_format=TodoItem,
     )
     return response.choices[0].message.content
 
 
 if __name__ == "__main__":
-    from src.backend.api import EmailContent
+    from backend.src.api import EmailContent
 
     email = EmailContent(
         subject="Meeting with John",
@@ -41,5 +52,5 @@ if __name__ == "__main__":
         sender="John Doe",
         recipient="Jane Doe",
     )
-    todos = summarize(email)
+    todos = extract_todos(email)
     print(todos)
