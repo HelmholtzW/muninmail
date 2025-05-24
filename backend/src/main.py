@@ -99,7 +99,9 @@ async def get_emails():
     """Fetches all emails from the configured IMAP server."""
     try:
         emails = fetch_emails_service()
-        return FetchEmailsResponse(emails=emails, total_count=len(emails))
+        # Convert Pydantic objects to dictionaries to avoid validation issues
+        email_dicts = [email.model_dump() for email in emails]
+        return FetchEmailsResponse(emails=email_dicts, total_count=len(emails))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching emails: {str(e)}")
 
@@ -108,7 +110,7 @@ async def get_emails():
 async def post_send_email(request: SendEmailRequest):
     """Sends an email using the configured SMTP server."""
     try:
-        success = send_email_service(request.to_address, request.subject, request.body)
+        success = send_email_service(request.sender, request.recipient, request.subject, request.body)
         if success:
             return SendEmailResponse(success=True, message="Email sent successfully.")
         else:
