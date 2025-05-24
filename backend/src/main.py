@@ -13,6 +13,7 @@ from .models import (
     SendEmailResponse,
 )
 from .services.email_service import (
+    fetch_email_by_id,
     fetch_emails as fetch_emails_service,
     send_email as send_email_service,
 )
