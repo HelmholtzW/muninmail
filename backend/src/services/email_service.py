@@ -6,19 +6,20 @@ from email.mime.text import MIMEText
 from email.header import decode_header
 from email.utils import parsedate_to_datetime
 from typing import List, Dict, Any, Optional
-from backend.src.models import FetchEmailResponseItem
+from ..models import FetchEmailResponseItem
 import email
 
 load_dotenv()
 
 # Configuration loaded from environment variables
-IMAP_SERVER = os.getenv('IMAP_SERVER')
-IMAP_USERNAME = os.getenv('IMAP_USERNAME')
-IMAP_PASSWORD = os.getenv('IMAP_PASSWORD')
-SMTP_SERVER = os.getenv('SMTP_SERVER')
-SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
-SMTP_USERNAME = os.getenv('SMTP_USERNAME')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+IMAP_SERVER = os.getenv("IMAP_SERVER")
+IMAP_USERNAME = os.getenv("IMAP_USERNAME")
+IMAP_PASSWORD = os.getenv("IMAP_PASSWORD")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
 
 def get_decoded_header(header_value: Optional[str]) -> str:
     """Decodes email headers to a readable string."""
@@ -27,10 +28,11 @@ def get_decoded_header(header_value: Optional[str]) -> str:
     decoded_parts = []
     for part, charset in decode_header(header_value):
         if isinstance(part, bytes):
-            decoded_parts.append(part.decode(charset or 'utf-8', errors='ignore'))
+            decoded_parts.append(part.decode(charset or "utf-8", errors="ignore"))
         else:
             decoded_parts.append(part)
     return "".join(decoded_parts)
+
 
 def get_email_body(msg: email.message.Message) -> str:
     """Extracts the plain text body from an email message."""
@@ -38,39 +40,45 @@ def get_email_body(msg: email.message.Message) -> str:
         for part in msg.walk():
             content_type = part.get_content_type()
             content_disposition = str(part.get("Content-Disposition"))
-            if content_type == 'text/plain' and 'attachment' not in content_disposition:
+            if content_type == "text/plain" and "attachment" not in content_disposition:
                 try:
-                    return part.get_payload(decode=True).decode(part.get_content_charset() or 'utf-8', errors='ignore')
+                    return part.get_payload(decode=True).decode(
+                        part.get_content_charset() or "utf-8", errors="ignore"
+                    )
                 except:
                     return "[Could not decode plain text body]"
         # If no plain text part found, try to get HTML (and ideally convert it, but for now just return a note)
         for part in msg.walk():
             content_type = part.get_content_type()
             content_disposition = str(part.get("Content-Disposition"))
-            if content_type == 'text/html' and 'attachment' not in content_disposition:
+            if content_type == "text/html" and "attachment" not in content_disposition:
                 # In a real app, you might want to strip HTML tags here
                 return "[HTML body found, plain text preferred but not available]"
         return "[No plain text body found in multipart email]"
     else:
         # Not a multipart email, just get the payload
         try:
-            return msg.get_payload(decode=True).decode(msg.get_content_charset() or 'utf-8', errors='ignore')
+            return msg.get_payload(decode=True).decode(
+                msg.get_content_charset() or "utf-8", errors="ignore"
+            )
         except:
             return "[Could not decode email body]"
+
 
 def get_attachment_filenames(msg: email.message.Message) -> List[str]:
     """Extracts a list of attachment filenames from an email message."""
     attachments = []
     for part in msg.walk():
-        if part.get_content_maintype() == 'multipart':
+        if part.get_content_maintype() == "multipart":
             continue
-        if part.get('Content-Disposition') is None:
+        if part.get("Content-Disposition") is None:
             continue
         filename = part.get_filename()
         if filename:
             decoded_filename = get_decoded_header(filename)
             attachments.append(decoded_filename)
     return attachments
+
 
 def fetch_emails() -> List[FetchEmailResponseItem]:
     """Fetches emails from the IMAP server and parses them into FetchEmailResponseItem objects."""
@@ -80,23 +88,23 @@ def fetch_emails() -> List[FetchEmailResponseItem]:
     try:
         mail = imaplib.IMAP4_SSL(IMAP_SERVER)
         mail.login(IMAP_USERNAME, IMAP_PASSWORD)
-        mail.select('inbox')
-        status, data = mail.search(None, 'ALL')
+        mail.select("inbox")
+        status, data = mail.search(None, "ALL")
         mail_ids = []
         for block in data:
             mail_ids += block.split()
 
         parsed_emails: List[FetchEmailResponseItem] = []
         for i in mail_ids:
-            status, data = mail.fetch(i, '(RFC822)')
+            status, data = mail.fetch(i, "(RFC822)")
             for response_part in data:
                 if isinstance(response_part, tuple):
                     msg = email.message_from_bytes(response_part[1])
-                    
+
                     subject = get_decoded_header(msg["subject"])
                     sender = get_decoded_header(msg["from"])
                     recipient = get_decoded_header(msg["to"])
-                    
+
                     date_str = msg["date"]
                     timestamp_str = ""
                     if date_str:
@@ -105,8 +113,8 @@ def fetch_emails() -> List[FetchEmailResponseItem]:
                             timestamp_str = dt_object.isoformat()
                         except Exception as e:
                             print(f"Could not parse date string '{date_str}': {e}")
-                            timestamp_str = date_str # Fallback to raw date string
-                    
+                            timestamp_str = date_str  # Fallback to raw date string
+
                     body = get_email_body(msg)
                     attachments = get_attachment_filenames(msg)
 
@@ -118,7 +126,7 @@ def fetch_emails() -> List[FetchEmailResponseItem]:
                             sender=sender or "Unknown Sender",
                             recipient=recipient or "Unknown Recipient",
                             timestamp=timestamp_str or "No Date",
-                            attachments=attachments
+                            attachments=attachments,
                         )
                     )
         mail.logout()
@@ -127,6 +135,7 @@ def fetch_emails() -> List[FetchEmailResponseItem]:
         print(f"Error fetching emails: {e}")
         return []
 
+
 def send_email(to_address: str, subject: str, body: str) -> bool:
     """Sends an email using the SMTP server."""
     if not all([SMTP_SERVER, SMTP_USERNAME, SMTP_PASSWORD]):
@@ -134,9 +143,9 @@ def send_email(to_address: str, subject: str, body: str) -> bool:
         return False
     try:
         msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = to_address
+        msg["Subject"] = subject
+        msg["From"] = SMTP_USERNAME
+        msg["To"] = to_address
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()  # Use TLS
@@ -147,14 +156,17 @@ def send_email(to_address: str, subject: str, body: str) -> bool:
         print(f"Error sending email: {e}")
         return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example usage (for testing purposes)
     print("Fetching emails...")
     retrieved_emails: List[FetchEmailResponseItem] = fetch_emails()
     if retrieved_emails:
         print(f"Fetched {len(retrieved_emails)} emails.")
         for email_item in retrieved_emails:
-            print(f"- ID: {email_item.id}, Subject: {email_item.subject}, Sender: {email_item.sender}, Recipient: {email_item.recipient}, Timestamp: {email_item.timestamp}")
+            print(
+                f"- ID: {email_item.id}, Subject: {email_item.subject}, Sender: {email_item.sender}, Recipient: {email_item.recipient}, Timestamp: {email_item.timestamp}"
+            )
     else:
         print("No emails fetched or error occurred.")
 
@@ -164,4 +176,4 @@ if __name__ == '__main__':
     # if success:
     #     print("Test email sent successfully.")
     # else:
-    #     print("Failed to send test email.") 
+    #     print("Failed to send test email.")

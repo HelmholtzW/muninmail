@@ -11,7 +11,10 @@ from .models import (
     SendEmailRequest,
     SendEmailResponse,
 )
-from backend.src.services.email_service import fetch_emails as fetch_emails_service, send_email as send_email_service
+from .services.email_service import (
+    fetch_emails as fetch_emails_service,
+    send_email as send_email_service,
+)
 from .skills.summarize_email import summarize_email_skill
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
@@ -29,7 +32,13 @@ async def root():
     return {
         "message": "Email Agents API",
         "version": "1.0.0",
-        "endpoints": ["/summarize", "/extract_todos", "/get_flags", "/emails", "/send_email"],
+        "endpoints": [
+            "/summarize",
+            "/extract_todos",
+            "/get_flags",
+            "/emails",
+            "/send_email",
+        ],
         "description": "API for email processing tasks",
     }
 
@@ -117,7 +126,7 @@ async def post_send_email(request: SendEmailRequest):
     except Exception as e:
         # Catch any other unexpected errors during the process
         raise HTTPException(status_code=500, detail=f"Error sending email: {str(e)}")
-    
+
 
 if __name__ == "__main__":
     import uvicorn

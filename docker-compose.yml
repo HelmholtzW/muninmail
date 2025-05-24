@@ -1,0 +1,155 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: cerebras-postgres
+    environment:
+      POSTGRES_DB: cerebras_email_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cerebras_email_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: cerebras-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cerebras-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - REDIS_URL=redis://redis:6379/0
+      - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
+      - IMAP_USERNAME=${IMAP_USERNAME}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - DEBUG=${DEBUG:-True}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Running database migrations...' &&
+        alembic -c alembic.ini upgrade head &&
+        echo 'Starting FastAPI server...' &&
+        uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # Celery Worker for background email processing
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cerebras-celery-worker
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - REDIS_URL=redis://redis:6379/0
+      - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
+      - IMAP_USERNAME=${IMAP_USERNAME}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - SMTP_SERVER=${SMTP_SERVER:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - DEBUG=${DEBUG:-True}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        python -c 'import time; time.sleep(15)' &&
+        echo 'Starting Celery worker...' &&
+        celery -A src.celery_app worker --loglevel=info --concurrency=2
+      "
+
+  # Celery Beat for scheduled tasks (optional)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cerebras-celery-beat
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - REDIS_URL=redis://redis:6379/0
+      - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
+      - IMAP_USERNAME=${IMAP_USERNAME}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - DEBUG=${DEBUG:-True}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        python -c 'import time; time.sleep(20)' &&
+        echo 'Starting Celery beat scheduler...' &&
+        celery -A src.celery_app beat --loglevel=info
+      "
+
+  # Celery Flower for monitoring (optional)
+  celery-flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cerebras-celery-flower
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for Redis to be ready...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Starting Celery Flower...' &&
+        celery -A src.celery_app flower --host=0.0.0.0 --port=5555
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+networks:
+  default:
+    name: cerebras-network
