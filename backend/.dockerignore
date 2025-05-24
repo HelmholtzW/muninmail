@@ -50,5 +50,4 @@ README.md
 Dockerfile
 .dockerignore
 
-# Alembic versions (will be recreated)
-alembic/versions/* 
+# Alembic versions are needed for migrations to work properly 

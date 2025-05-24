@@ -57,6 +57,17 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
                     state="PROCESSING", meta={"step": "Saving email to database"}
                 )
 
+            # Handle timestamp conversion - convert timezone-aware to timezone-naive
+            timestamp = None
+            if email_data["timestamp"]:
+                parsed_timestamp = datetime.fromisoformat(email_data["timestamp"])
+                # Convert timezone-aware datetime to timezone-naive for database compatibility
+                timestamp = (
+                    parsed_timestamp.replace(tzinfo=None)
+                    if parsed_timestamp.tzinfo
+                    else parsed_timestamp
+                )
+
             # Create Email object
             email_obj = Email(
                 message_id=email_data["message_id"],
@@ -64,11 +75,7 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
                 sender=email_data["sender"],
                 recipient=email_data["recipient"],
                 body=email_data["body"],
-                timestamp=(
-                    datetime.fromisoformat(email_data["timestamp"])
-                    if email_data["timestamp"]
-                    else None
-                ),
+                timestamp=timestamp,
                 attachments=email_data.get("attachments", []),
                 processing_status="processing",
             )

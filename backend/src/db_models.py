@@ -22,7 +22,7 @@ class Email(Base):
     sender = Column(String, index=True)
     recipient = Column(String)
     body = Column(Text)
-    timestamp = Column(DateTime, index=True)
+    timestamp = Column(DateTime(timezone=True), index=True)
     attachments = Column(JSON)  # Store attachment filenames as JSON
 
     # Processing status
