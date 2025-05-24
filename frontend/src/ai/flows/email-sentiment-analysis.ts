@@ -2,15 +2,15 @@
 
 'use server';
 /**
- * @fileOverview An email sentiment analysis AI agent.
+ * @fileOverview An email sentiment analysis AI service.
  *
  * - analyzeEmailSentiment - A function that handles the email sentiment analysis process.
  * - AnalyzeEmailSentimentInput - The input type for the analyzeEmailSentiment function.
  * - AnalyzeEmailSentimentOutput - The return type for the analyzeEmailSentiment function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { generateStructuredResponse } from '@/ai/client';
+import { z } from 'zod';
 
 const AnalyzeEmailSentimentInputSchema = z.object({
   emailBody: z.string().describe('The body of the email to analyze.'),
@@ -39,33 +39,51 @@ export type AnalyzeEmailSentimentOutput = z.infer<
 export async function analyzeEmailSentiment(
   input: AnalyzeEmailSentimentInput
 ): Promise<AnalyzeEmailSentimentOutput> {
-  return analyzeEmailSentimentFlow(input);
+  // Validate input
+  const validatedInput = AnalyzeEmailSentimentInputSchema.parse(input);
+
+  const systemPrompt = `You are an AI assistant that analyzes the sentiment of emails.
+
+Analyze the provided email body and provide a sentiment analysis, a sentiment score, and a detailed analysis.
+
+Ensure the sentiment is one of: positive, negative, neutral.
+The score should range from -1 (negative) to 1 (positive).
+The analysis should briefly explain the reasoning behind the sentiment.`;
+
+  const userPrompt = `Email Body: ${validatedInput.emailBody}`;
+
+  const schema = {
+    name: 'analyze_email_sentiment',
+    description: 'Analyze the sentiment of an email',
+    parameters: {
+      type: 'object',
+      properties: {
+        sentiment: {
+          type: 'string',
+          description: 'The overall sentiment of the email (positive, negative, or neutral)',
+          enum: ['positive', 'negative', 'neutral']
+        },
+        score: {
+          type: 'number',
+          description: 'A numerical score representing the sentiment, ranging from -1 (negative) to 1 (positive)',
+          minimum: -1,
+          maximum: 1
+        },
+        analysis: {
+          type: 'string',
+          description: 'A detailed analysis of the email sentiment'
+        }
+      },
+      required: ['sentiment', 'score', 'analysis']
+    }
+  };
+
+  const result = await generateStructuredResponse<AnalyzeEmailSentimentOutput>(
+    systemPrompt,
+    userPrompt,
+    schema
+  );
+
+  // Validate output
+  return AnalyzeEmailSentimentOutputSchema.parse(result);
 }
-
-const prompt = ai.definePrompt({
-  name: 'analyzeEmailSentimentPrompt',
-  input: {schema: AnalyzeEmailSentimentInputSchema},
-  output: {schema: AnalyzeEmailSentimentOutputSchema},
-  prompt: `You are an AI assistant that analyzes the sentiment of emails.
-
-  Analyze the following email body and provide a sentiment analysis, a sentiment score, and a detailed analysis.
-
-  Email Body: {{{emailBody}}}
-
-  Ensure the sentiment is one of: positive, negative, neutral.
-  The score should range from -1 (negative) to 1 (positive).
-  The analysis should briefly explain the reasoning behind the sentiment.
-  `,
-});
-
-const analyzeEmailSentimentFlow = ai.defineFlow(
-  {
-    name: 'analyzeEmailSentimentFlow',
-    inputSchema: AnalyzeEmailSentimentInputSchema,
-    outputSchema: AnalyzeEmailSentimentOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);

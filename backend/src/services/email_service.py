@@ -147,6 +147,17 @@ def send_email(sender: str, recipient: str, subject: str, body: str) -> bool:
         print(f"Error sending email: {e}")
         return False
 
+def fetch_email_by_id(email_id: str) -> FetchEmailResponseItem:
+    """Fetches a specific email by ID."""
+    return FetchEmailResponseItem(
+        id=email_id,
+        subject="Test Subject",
+        body="Test Body",
+        sender="Test Sender",
+        recipient="Test Recipient",
+        timestamp="2021-01-01T00:00:00Z",
+    )
+
 if __name__ == '__main__':
     # Example usage (for testing purposes)
     print("Fetching emails...")

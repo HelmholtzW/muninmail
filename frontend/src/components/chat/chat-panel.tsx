@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, type FormEvent } from 'react';
@@ -6,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Send, MessageSquare, User, Bot, ChevronDown, ChevronUp } from 'lucide-react';
-import { chatWithEmailAssistant, type EmailChatInput, type EmailChatOutput } from '@/ai/flows/email-chat-flow';
+import { Loader2, Send, MessageSquare, User, Bot, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { chatWithEmailAssistant, type EmailChatOutput } from '@/ai/flows/email-chat-flow';
 import { cn } from '@/lib/utils';
 
 interface ChatMessage {
@@ -37,6 +36,11 @@ export function ChatPanel() {
     }
   }, [messages, isExpanded]);
 
+  const handleClearConversation = () => {
+    setMessages([]);
+    setError(null);
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
@@ -53,7 +57,18 @@ export function ChatPanel() {
     setError(null);
 
     try {
-      const aiResponse: EmailChatOutput = await chatWithEmailAssistant({ userInput: userMessage.text });
+      // Convert current messages to the format expected by the AI function
+      const messageHistory = messages.map(msg => ({
+        sender: msg.sender,
+        text: msg.text,
+        timestamp: msg.timestamp.toISOString()
+      }));
+
+      const aiResponse: EmailChatOutput = await chatWithEmailAssistant({ 
+        userInput: userMessage.text,
+        messageHistory 
+      });
+      
       const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
         sender: 'ai',
@@ -87,15 +102,34 @@ export function ChatPanel() {
           <MessageSquare className="mr-2 h-5 w-5 text-primary" />
           AI Email Assistant
         </CardTitle>
-        <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} aria-label={isExpanded ? "Collapse Chat" : "Expand Chat"}>
-          {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleClearConversation}
+              aria-label="Clear conversation"
+              className="h-8 w-8"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} aria-label={isExpanded ? "Collapse Chat" : "Expand Chat"}>
+            {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+          </Button>
+        </div>
       </CardHeader>
       {isExpanded && (
         <>
           <CardContent className="flex-1 p-0 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="p-4 space-y-3" ref={scrollViewportRef}>
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground py-8">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">Start a conversation with your AI email assistant</p>
+                  </div>
+                )}
                 {messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`p-3 rounded-lg max-w-[70%] shadow-sm break-words ${

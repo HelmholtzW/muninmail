@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 import json
 from .models import (
+    FetchEmailResponseItem,
     SummarizeRequest,
     SummarizeResponse,
     ExtractTodosRequest,
@@ -11,7 +12,7 @@ from .models import (
     SendEmailRequest,
     SendEmailResponse,
 )
-from backend.src.services.email_service import fetch_emails as fetch_emails_service, send_email as send_email_service
+from backend.src.services.email_service import fetch_email_by_id, fetch_emails as fetch_emails_service, send_email as send_email_service
 from .skills.summarize_email import summarize_email_skill
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
@@ -120,6 +121,16 @@ async def post_send_email(request: SendEmailRequest):
         # Catch any other unexpected errors during the process
         raise HTTPException(status_code=500, detail=f"Error sending email: {str(e)}")
     
+
+@app.get("/emails/{email_id}", response_model=FetchEmailResponseItem)
+async def get_email(email_id: str):
+    """Fetches a specific email by ID."""
+    try:
+        email = fetch_email_by_id(email_id)
+        return email
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Email not found: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

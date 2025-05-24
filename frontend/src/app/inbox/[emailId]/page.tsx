@@ -17,6 +17,7 @@ interface EmailPageProps {
 }
 
 export default async function SelectedEmailPage({ params }: EmailPageProps) {
+  
   const { emailId } = params;
   const allEmails = await getEmails();
   const selectedEmail = await getEmailById(emailId);

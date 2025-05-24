@@ -8,8 +8,8 @@
  * - SuggestPhrasesOutput - The return type for the suggestPhrases function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { generateStructuredResponse } from '@/ai/client';
+import { z } from 'zod';
 
 const SuggestPhrasesInputSchema = z.object({
   emailBody: z.string().describe('The body of the email to analyze.'),
@@ -25,28 +25,43 @@ const SuggestPhrasesOutputSchema = z.object({
 export type SuggestPhrasesOutput = z.infer<typeof SuggestPhrasesOutputSchema>;
 
 export async function suggestPhrases(input: SuggestPhrasesInput): Promise<SuggestPhrasesOutput> {
-  return suggestPhrasesFlow(input);
+  // Validate input
+  const validatedInput = SuggestPhrasesInputSchema.parse(input);
+
+  const systemPrompt = `You are an AI assistant that helps users write professional emails. You will suggest phrases to include in the email to avoid sounding passive-aggressive, and analyze the sentiment of the email.
+
+Provide helpful phrase suggestions that can improve the tone and professionalism of the email, along with a brief sentiment analysis.`;
+
+  const userPrompt = `Email Body: ${validatedInput.emailBody}`;
+
+  const schema = {
+    name: 'suggest_phrases',
+    description: 'Suggest phrases for professional email writing',
+    parameters: {
+      type: 'object',
+      properties: {
+        suggestedPhrases: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          description: 'A list of suggested phrases to include in the email to improve tone and professionalism'
+        },
+        sentimentAnalysis: {
+          type: 'string',
+          description: 'A brief sentiment analysis of the email'
+        }
+      },
+      required: ['suggestedPhrases', 'sentimentAnalysis']
+    }
+  };
+
+  const result = await generateStructuredResponse<SuggestPhrasesOutput>(
+    systemPrompt,
+    userPrompt,
+    schema
+  );
+
+  // Validate output
+  return SuggestPhrasesOutputSchema.parse(result);
 }
-
-const prompt = ai.definePrompt({
-  name: 'suggestPhrasesPrompt',
-  input: {schema: SuggestPhrasesInputSchema},
-  output: {schema: SuggestPhrasesOutputSchema},
-  prompt: `You are an AI assistant that helps users write professional emails. You will suggest phrases to include in the email to avoid sounding passive-aggressive, and analyze the sentiment of the email.
-
-Email Body: {{{emailBody}}}
-
-Suggested Phrases:`, // output will be parsed into suggestedPhrases
-});
-
-const suggestPhrasesFlow = ai.defineFlow(
-  {
-    name: 'suggestPhrasesFlow',
-    inputSchema: SuggestPhrasesInputSchema,
-    outputSchema: SuggestPhrasesOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
