@@ -1,4 +1,3 @@
-
 export interface Email {
   id: string;
   sender: string;
@@ -8,6 +7,12 @@ export interface Email {
   timestamp: string; // ISO string
   read: boolean;
   tags?: string[]; // Added tags field
+}
+
+export interface Todo {
+  task: string;
+  priority: string; // "high", "medium", "low"
+  due_date?: string | null;
 }
 
 export interface SuggestedPhraseItem {

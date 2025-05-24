@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import json
 from .models import (
     FetchEmailResponseItem,
@@ -12,12 +13,14 @@ from .models import (
     FetchEmailsResponse,
     SendEmailRequest,
     SendEmailResponse,
+    TodoItem,
 )
 from .services.email_service import (
     fetch_email_by_id,
     fetch_emails as fetch_emails_service,
     send_email as send_email_service,
 )
+from .services.todo_service import fetch_todos as fetch_todos_service
 from .skills.summarize_email import summarize_email_skill
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
@@ -26,6 +29,18 @@ app = FastAPI(
     title="Email Agents API",
     description="API for email processing tasks including summarization, todo extraction, and flagging",
     version="1.0.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:9002",
+        "http://localhost:3000",
+    ],  # Allow frontend origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 
@@ -41,6 +56,7 @@ async def root():
             "/get_flags",
             "/emails",
             "/send_email",
+            "/todos",
         ],
         "description": "API for email processing tasks",
     }
@@ -110,7 +126,7 @@ async def get_flags(request: GetFlagsRequest):
 async def get_emails():
     """Fetches all emails from the postgres database."""
     try:
-        emails = asdf()
+        emails = fetch_emails_service()
         # Convert Pydantic objects to dictionaries to avoid validation issues
         email_dicts = [email.model_dump() for email in emails]
         return FetchEmailsResponse(emails=email_dicts, total_count=len(emails))
@@ -122,7 +138,9 @@ async def get_emails():
 async def post_send_email(request: SendEmailRequest):
     """Sends an email using the configured SMTP server."""
     try:
-        success = send_email_service(request.sender, request.recipient, request.subject, request.body)
+        success = send_email_service(
+            request.sender, request.recipient, request.subject, request.body
+        )
         if success:
             return SendEmailResponse(success=True, message="Email sent successfully.")
         else:
@@ -147,12 +165,10 @@ async def get_email(email_id: str):
 async def get_todos():
     """Fetches all todos from the database."""
     try:
-        todos = fetch_todos_service()
+        todos = await fetch_todos_service()
         return todos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
-    
-
 
 
 if __name__ == "__main__":
