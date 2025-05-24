@@ -66,7 +66,7 @@ class FetchEmailResponseItem(BaseModel):
     body: str
     sender: str
     recipient: str
-    timestamp: datetime
+    timestamp: str
     attachments: Optional[List[str]] = None
 
 class FetchEmailsResponse(BaseModel):
