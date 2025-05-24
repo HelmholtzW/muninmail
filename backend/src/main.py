@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, HTTPException
 import json
 from .models import (
@@ -107,9 +108,9 @@ async def get_flags(request: GetFlagsRequest):
 
 @app.get("/emails", response_model=FetchEmailsResponse)
 async def get_emails():
-    """Fetches all emails from the configured IMAP server."""
+    """Fetches all emails from the postgres database."""
     try:
-        emails = fetch_emails_service()
+        emails = asdf()
         # Convert Pydantic objects to dictionaries to avoid validation issues
         email_dicts = [email.model_dump() for email in emails]
         return FetchEmailsResponse(emails=email_dicts, total_count=len(emails))
@@ -140,6 +141,18 @@ async def get_email(email_id: str):
         return email
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Email not found: {str(e)}")
+
+
+@app.get("/todos", response_model=List[TodoItem])
+async def get_todos():
+    """Fetches all todos from the database."""
+    try:
+        todos = fetch_todos_service()
+        return todos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
+    
+
 
 
 if __name__ == "__main__":
