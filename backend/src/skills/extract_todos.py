@@ -1,5 +1,5 @@
 from litellm import completion
-from backend.src.models import TodoItem, EmailContent
+from ..models import ExtractTodosResponse, EmailContent
 import os
 
 PROMPT_TEMPLATE = """
@@ -31,20 +31,20 @@ Return the list in the language of the email.
 """
 
 
-def extract_todos(email: EmailContent) -> list[str]:
+def extract_todos_skill(email: EmailContent) -> list[str]:
     prompt = PROMPT_TEMPLATE.format(email=email)
     response = completion(
         model="cerebras/qwen-3-32b",
         api_key=os.getenv("CEREBRAS_API_KEY"),
         base_url="https://api.cerebras.ai/v1",
         messages=[{"role": "user", "content": prompt}],
-        response_format=TodoItem,
+        response_format=ExtractTodosResponse,
     )
     return response.choices[0].message.content
 
 
 if __name__ == "__main__":
-    from backend.src.api import EmailContent
+    from src.main import EmailContent
 
     email = EmailContent(
         subject="Meeting with John",
@@ -52,5 +52,5 @@ if __name__ == "__main__":
         sender="John Doe",
         recipient="Jane Doe",
     )
-    todos = extract_todos(email)
+    todos = extract_todos_skill(email)
     print(todos)
