@@ -1,15 +1,16 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
 import json
-from datetime import datetime
-from backend.src.models import (
+from .models import (
     SummarizeRequest,
     SummarizeResponse,
     ExtractTodosRequest,
     ExtractTodosResponse,
     GetFlagsRequest,
+    GetFlagsResponse,
 )
+from .skills.summarize_email import summarize_email_skill
+from .skills.extract_todos import extract_todos_skill
+from .skills.get_flags import get_flags_skill
 
 app = FastAPI(
     title="Email Agents API",
@@ -39,13 +40,10 @@ async def summarize_email(request: SummarizeRequest):
     - Key points extracted from the content
     - Summary of attachments (if requested and available)
     """
-    raise NotImplementedError("Not implemented")
     try:
         email = request.email
-
-        return SummarizeResponse(
-            summary=summary,
-        )
+        response = json.loads(summarize_email_skill(email))
+        return SummarizeResponse.model_validate(response)
 
     except Exception as e:
         raise HTTPException(
@@ -64,11 +62,10 @@ async def extract_todos(request: ExtractTodosRequest):
     - Due dates (if mentioned)
     - Assignees (if specified)
     """
-    raise NotImplementedError("Not implemented")
     try:
         email = request.email
-
-        return ExtractTodosResponse(todos=todos)
+        response = json.loads(extract_todos_skill(email))
+        return ExtractTodosResponse.model_validate(response)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error extracting todos: {str(e)}")
@@ -84,11 +81,10 @@ async def get_flags(request: GetFlagsRequest):
     - Custom tags based on content analysis
     - Confidence scores for each flag
     """
-    raise NotImplementedError("Not implemented")
     try:
         email = request.email
-
-        return GetFlagsResponse(flags=flags)
+        response = json.loads(get_flags_skill(email, request.available_flags))
+        return GetFlagsResponse.model_validate(response)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing flags: {str(e)}")

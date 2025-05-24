@@ -1,5 +1,5 @@
 from litellm import completion
-from backend.src.models import SummarizeResponse, EmailContent
+from ..models import SummarizeResponse, EmailContent
 import os
 
 PROMPT_TEMPLATE = """
@@ -17,7 +17,7 @@ Return the summary in the language of the email.
 """
 
 
-def summarize(email: EmailContent) -> list[str]:
+def summarize_email_skill(email: EmailContent) -> list[str]:
     prompt = PROMPT_TEMPLATE.format(email=email)
     response = completion(
         model="cerebras/qwen-3-32b",
@@ -30,7 +30,7 @@ def summarize(email: EmailContent) -> list[str]:
 
 
 if __name__ == "__main__":
-    from backend.src.api import EmailContent
+    from src.main import EmailContent
 
     email = EmailContent(
         subject="Meeting with John",
@@ -38,5 +38,5 @@ if __name__ == "__main__":
         sender="John Doe",
         recipient="Jane Doe",
     )
-    todos = summarize(email)
+    todos = summarize_email_skill(email)
     print(todos)

@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
 
 
 # Pydantic models for request/response
@@ -9,7 +8,7 @@ class EmailContent(BaseModel):
     body: str
     sender: str
     recipient: str
-    timestamp: Optional[datetime] = None
+    timestamp: Optional[str] = None
     attachments: Optional[List[str]] = None
 
 

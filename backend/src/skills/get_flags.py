@@ -1,5 +1,5 @@
 from litellm import completion
-from backend.src.models import Flag, GetFlagsResponse, EmailContent
+from ..models import Flag, GetFlagsResponse, EmailContent
 from typing import List
 import os
 
@@ -20,7 +20,7 @@ If the email is not relevant to any of the flags, return an empty list.
 """
 
 
-def get_flags(email: EmailContent, available_flags: List[Flag]) -> list[str]:
+def get_flags_skill(email: EmailContent, available_flags: List[Flag]) -> list[str]:
     prompt = PROMPT_TEMPLATE.format(email=email, available_flags=available_flags)
     response = completion(
         model="cerebras/qwen-3-32b",
@@ -33,7 +33,7 @@ def get_flags(email: EmailContent, available_flags: List[Flag]) -> list[str]:
 
 
 if __name__ == "__main__":
-    from backend.src.api import EmailContent
+    from src.main import EmailContent
 
     email = EmailContent(
         subject="Meeting with John",
@@ -46,5 +46,5 @@ if __name__ == "__main__":
         Flag(type="urgent", description="Urgent"),
         Flag(type="meeting_request", description="Meeting request"),
     ]
-    flags = get_flags(email, available_flags)
+    flags = get_flags_skill(email, available_flags)
     print(flags)
