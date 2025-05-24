@@ -1,10 +1,8 @@
 import json
 from typing import List
-from fastapi.middleware.cors import CORSMiddleware
-import json
-from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
