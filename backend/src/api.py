@@ -9,7 +9,12 @@ from backend.src.models import (
     ExtractTodosRequest,
     ExtractTodosResponse,
     GetFlagsRequest,
+    GetFlagsResponse,
+    FetchEmailsResponse,
+    SendEmailRequest,
+    SendEmailResponse,
 )
+from backend.src.services.email_service import fetch_emails as fetch_emails_service, send_email as send_email_service
 
 app = FastAPI(
     title="Email Agents API",
@@ -24,7 +29,7 @@ async def root():
     return {
         "message": "Email Agents API",
         "version": "1.0.0",
-        "endpoints": ["/summarize", "/extract_todos", "/get_flags"],
+        "endpoints": ["/summarize", "/extract_todos", "/get_flags", "/emails", "/send_email"],
         "description": "API for email processing tasks",
     }
 
@@ -92,6 +97,31 @@ async def get_flags(request: GetFlagsRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing flags: {str(e)}")
+
+
+@app.get("/emails", response_model=FetchEmailsResponse)
+async def get_emails():
+    """Fetches all emails from the configured IMAP server."""
+    try:
+        emails = fetch_emails_service()
+        return FetchEmailsResponse(emails=emails, total_count=len(emails))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching emails: {str(e)}")
+
+
+@app.post("/send_email", response_model=SendEmailResponse)
+async def post_send_email(request: SendEmailRequest):
+    """Sends an email using the configured SMTP server."""
+    try:
+        success = send_email_service(request.to_address, request.subject, request.body)
+        if success:
+            return SendEmailResponse(success=True, message="Email sent successfully.")
+        else:
+            # The email_service already prints the error, so a generic message here is fine.
+            raise HTTPException(status_code=500, detail="Failed to send email.")
+    except Exception as e:
+        # Catch any other unexpected errors during the process
+        raise HTTPException(status_code=500, detail=f"Error sending email: {str(e)}")
 
 
 if __name__ == "__main__":

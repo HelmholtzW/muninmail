@@ -58,3 +58,28 @@ class GetFlagsResponse(BaseModel):
     flags: List[Flag]
     # requires_response: bool
     # custom_tags: List[str]
+
+
+# Email Fetching
+class FetchEmailResponseItem(BaseModel):
+    id: str
+    subject: str
+    body: str
+    sender: str
+    recipient: str
+    timestamp: datetime
+    attachments: Optional[List[str]] = None
+
+class FetchEmailsResponse(BaseModel):
+    emails: List[FetchEmailResponseItem]
+    total_count: int
+
+# Email Sending
+class SendEmailRequest(BaseModel):
+    to_address: str
+    subject: str
+    body: str
+
+class SendEmailResponse(BaseModel):
+    success: bool
+    message: str
