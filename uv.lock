@@ -370,11 +370,19 @@ name = "cerebras-hackathon"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "fastapi" },
+    { name = "pydantic" },
     { name = "smolagents", extra = ["all"] },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "smolagents", extras = ["all"], specifier = ">=1.16.1" }]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115.12" },
+    { name = "pydantic", specifier = ">=2.11.5" },
+    { name = "smolagents", extras = ["all"], specifier = ">=1.16.1" },
+    { name = "uvicorn", specifier = ">=0.34.2" },
+]
 
 [[package]]
 name = "certifi"
