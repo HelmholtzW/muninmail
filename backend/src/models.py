@@ -75,7 +75,8 @@ class FetchEmailsResponse(BaseModel):
 
 # Email Sending
 class SendEmailRequest(BaseModel):
-    to_address: str
+    sender: str
+    recipient: str
     subject: str
     body: str
 

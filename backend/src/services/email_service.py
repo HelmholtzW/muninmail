@@ -136,7 +136,7 @@ def fetch_emails() -> List[FetchEmailResponseItem]:
         return []
 
 
-def send_email(to_address: str, subject: str, body: str) -> bool:
+def send_email(sender: str, recipient: str, subject: str, body: str) -> bool:
     """Sends an email using the SMTP server."""
     if not all([SMTP_SERVER, SMTP_USERNAME, SMTP_PASSWORD]):
         print("Error: SMTP server, username, or password not configured in .env file.")
@@ -144,13 +144,13 @@ def send_email(to_address: str, subject: str, body: str) -> bool:
     try:
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["From"] = SMTP_USERNAME
-        msg["To"] = to_address
+        msg["From"] = sender
+        msg["To"] = recipient
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()  # Use TLS
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.sendmail(SMTP_USERNAME, to_address, msg.as_string())
+            server.sendmail(SMTP_USERNAME, recipient, msg.as_string())
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
