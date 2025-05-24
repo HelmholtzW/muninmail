@@ -1,5 +1,8 @@
 import json
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
+import json
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
@@ -18,6 +21,7 @@ from .models import (
     SendEmailResponse,
     SummarizeRequest,
     SummarizeResponse,
+    TodoItem,
 )
 from .services.email_service import (
     fetch_email_by_id,
@@ -25,6 +29,7 @@ from .services.email_service import (
 from .services.email_service import (
     send_email as send_email_service,
 )
+from .services.todo_service import fetch_todos as fetch_todos_service
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
 from .skills.summarize_email import summarize_email_skill
@@ -33,6 +38,18 @@ app = FastAPI(
     title="Email Agents API",
     description="API for email processing tasks including summarization, todo extraction, and flagging",
     version="1.0.0",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:9002",
+        "http://localhost:3000",
+    ],  # Allow frontend origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 
@@ -48,6 +65,7 @@ async def root():
             "/get_flags",
             "/emails",
             "/send_email",
+            "/todos",
         ],
         "description": "API for email processing tasks",
     }
@@ -173,7 +191,7 @@ async def get_email(email_id: str):
 async def get_todos():
     """Fetches all todos from the database."""
     try:
-        todos = fetch_todos_service()
+        todos = await fetch_todos_service()
         return todos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
