@@ -1,0 +1,113 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 94.1%; /* Light Gray #F0F0F0 */
+    --foreground: 0 0% 20%; /* Dark Text #333333 */
+
+    --card: 40 100% 98%; /* Off-white #FAF9F6 */
+    --card-foreground: 0 0% 20%;
+
+    --popover: 40 100% 98%; /* Off-white */
+    --popover-foreground: 0 0% 20%;
+
+    --primary: 0 0% 66.3%; /* Dark Gray #A9A9A9 */
+    --primary-foreground: 40 100% 98%; /* Off-white */
+
+    --secondary: 0 0% 90%; /* Lighter Gray for secondary elements */
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 0% 85%; /* Muted text, subtle borders */
+    --muted-foreground: 0 0% 45.1%; /* Slightly darker muted text */
+
+    --accent: 0 0% 66.3%; /* Dark Gray #A9A9A9 */
+    --accent-foreground: 40 100% 98%; /* Off-white */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 88%; /* General borders */
+    --input: 0 0% 88%; /* Input field backgrounds/borders */
+    --ring: 0 0% 66.3%; /* Dark Gray for focus rings */
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 40 100% 98%; /* Off-white */
+    --sidebar-foreground: 0 0% 20%; /* Dark Text */
+    --sidebar-primary: 0 0% 66.3%; /* Dark Gray for active/primary items */
+    --sidebar-primary-foreground: 40 100% 98%; /* Off-white */
+    --sidebar-accent: 0 0% 92%; /* Slightly darker than BG for hover */
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 0 0% 66.3%; /* Dark Gray */
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 0 0% 10%; /* Darker Gray e.g. #1A1A1A */
+    --foreground: 0 0% 90%; /* Light Gray/Off-white e.g. #E5E5E5 */
+
+    --card: 0 0% 15%; /* Dark Gray for cards e.g. #262626 */
+    --card-foreground: 0 0% 90%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 0 0% 70%; /* Lighter Gray for dark mode primary buttons, e.g. #B3B3B3 */
+    --primary-foreground: 0 0% 10%; /* Dark text on light gray buttons */
+
+    --secondary: 0 0% 20%; /* Darker secondary */
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 70%; /* Lighter Gray for accent */
+    --accent-foreground: 0 0% 10%; /* Dark text on accent */
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 0 0% 70%; /* Lighter Gray for focus rings */
+
+    /* Sidebar specific colors for dark mode */
+    --sidebar-background: 0 0% 15%; /* Dark Gray (like card) */
+    --sidebar-foreground: 0 0% 90%; /* Light Text */
+    --sidebar-primary: 0 0% 70%; /* Lighter Gray for active/primary */
+    --sidebar-primary-foreground: 0 0% 10%; /* Dark text */
+    --sidebar-accent: 0 0% 22%; /* Hover color */
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 25%;
+    --sidebar-ring: 0 0% 70%;
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
