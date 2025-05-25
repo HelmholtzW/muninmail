@@ -43,13 +43,7 @@ export function AppSidebar() {
             className="flex items-center gap-2 text-lg font-semibold text-foreground hover:text-primary transition-colors"
             aria-label="MuninMail Home"
           >
-            <img
-              src={currentTheme === 'dark' ? '/logo-white.png' : '/logo.png'}
-              alt="MuninMail Logo"
-              width={24}
-              height={24}
-              className="h-6 w-6"
-            />
+            <span className="text-2xl">🐦‍⬛✉️</span>
             <span className="group-data-[collapsible=icon]:hidden transition-opacity duration-200">
               MuninMail
             </span>
