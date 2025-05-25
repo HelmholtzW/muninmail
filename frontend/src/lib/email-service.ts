@@ -5,7 +5,7 @@ function getApiUrl(): string {
   // Check if we're running on the server side (Node.js environment)
   if (typeof window === 'undefined') {
     // Server-side: use internal Docker network URL
-    return process.env.API_INTERNAL_URL || 'http://backend:8000';
+    return process.env.API_INTERNAL_URL || 'http://localhost:8000';
   }
   // Client-side: use the public API URL that the browser can access
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
