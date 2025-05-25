@@ -15,11 +15,11 @@ export function AppHeader() {
         <SidebarTrigger />
       </div>
       <Link href="/inbox" className="flex items-center gap-2 text-lg font-semibold md:text-base text-foreground hover:text-primary transition-colors">
-        <img 
+        <img
           src={currentTheme === 'dark' ? '/logo-white.png' : '/logo.png'}
-          alt="MuninMail Logo" 
-          width={24} 
-          height={24} 
+          alt="MuninMail Logo"
+          width={24}
+          height={24}
           className="h-6 w-6"
         />
         <span className="sr-only sm:not-sr-only">MuninMail</span>

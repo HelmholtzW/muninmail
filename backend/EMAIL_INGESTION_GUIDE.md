@@ -98,8 +98,8 @@ The Celery worker will show detailed logs of email processing progress.
 
 ### Check database directly:
 ```sql
-SELECT message_id, subject, processing_status, created_at 
-FROM emails 
+SELECT message_id, subject, processing_status, created_at
+FROM emails
 ORDER BY created_at DESC;
 ```
 
@@ -148,4 +148,4 @@ After successful ingestion:
 1. Check the `/emails` endpoint to see processed results
 2. View summaries, todos, and flags in the frontend
 3. Set up periodic ingestion using Celery Beat (scheduled tasks)
-4. Customize AI processing rules as needed 
+4. Customize AI processing rules as needed

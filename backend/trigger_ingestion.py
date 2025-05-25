@@ -14,7 +14,6 @@ Requirements:
     - IMAP credentials configured in .env file
 """
 
-import asyncio
 import sys
 from pathlib import Path
 
@@ -27,14 +26,16 @@ from src.tasks.email_tasks import fetch_and_process_emails_task
 def main():
     """Main function to trigger email ingestion."""
     print("🚀 Triggering email ingestion...")
-    print("This will fetch all emails from your IMAP inbox and process them with AI services.")
+    print(
+        "This will fetch all emails from your IMAP inbox and process them with AI services."
+    )
     print()
-    
+
     try:
         # Trigger the Celery task
         task = fetch_and_process_emails_task.delay()
-        
-        print(f"✅ Email ingestion task queued successfully!")
+
+        print("✅ Email ingestion task queued successfully!")
         print(f"📋 Task ID: {task.id}")
         print()
         print("📧 The system will now:")
@@ -43,16 +44,18 @@ def main():
         print("   3. Process each email with AI (summary, todos, flags)")
         print("   4. Save results to the database")
         print()
-        print("⏰ This process may take a few minutes depending on the number of emails.")
+        print(
+            "⏰ This process may take a few minutes depending on the number of emails."
+        )
         print("💡 You can check the progress by:")
         print("   - Watching the Celery worker logs")
         print("   - Calling GET /emails API endpoint")
         print("   - Checking your database directly")
         print()
         print(f"🔍 Task status can be tracked with ID: {task.id}")
-        
+
         return task.id
-        
+
     except Exception as e:
         print(f"❌ Error triggering email ingestion: {str(e)}")
         print("🔧 Make sure:")
@@ -67,4 +70,4 @@ if __name__ == "__main__":
     if task_id:
         sys.exit(0)
     else:
-        sys.exit(1) 
+        sys.exit(1)
