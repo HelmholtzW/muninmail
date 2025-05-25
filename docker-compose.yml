@@ -51,6 +51,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,6 +112,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -138,6 +140,7 @@ services:
       - IMAP_PASSWORD=${IMAP_PASSWORD}
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy

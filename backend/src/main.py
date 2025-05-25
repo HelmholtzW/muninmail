@@ -11,8 +11,8 @@ from .db_models import Email
 from .models import (
     ExtractTodosRequest,
     ExtractTodosResponse,
-    FetchEmailResponseItem,
     FetchEmailsResponse,
+    FetchProcessedEmailResponseItem,
     GetFlagsRequest,
     GetFlagsResponse,
     SendEmailRequest,
@@ -31,6 +31,7 @@ from .services.todo_service import fetch_todos as fetch_todos_service
 from .skills.extract_todos import extract_todos_skill
 from .skills.get_flags import get_flags_skill
 from .skills.summarize_email import summarize_email_skill
+from .tasks.email_tasks import fetch_and_process_emails_task
 
 app = FastAPI(
     title="Email Agents API",
@@ -64,6 +65,7 @@ async def root():
             "/emails",
             "/send_email",
             "/todos",
+            "/trigger-ingestion",
         ],
         "description": "API for email processing tasks",
     }
@@ -175,7 +177,7 @@ async def post_send_email(request: SendEmailRequest):
         raise HTTPException(status_code=500, detail=f"Error sending email: {str(e)}")
 
 
-@app.get("/emails/{email_id}", response_model=FetchEmailResponseItem)
+@app.get("/emails/{email_id}", response_model=FetchProcessedEmailResponseItem)
 async def get_email(email_id: str):
     """Fetches a specific email by ID."""
     try:
@@ -193,6 +195,34 @@ async def get_todos():
         return todos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
+
+
+@app.post("/trigger-ingestion")
+async def trigger_email_ingestion():
+    """
+    Manually trigger email ingestion from the configured IMAP inbox.
+
+    This endpoint will:
+    1. Fetch all emails from the IMAP server
+    2. Queue them for AI processing (summary, todos, flags)
+    3. Save processed results to the database
+
+    Returns the task ID for tracking the ingestion process.
+    """
+    try:
+        # Trigger the Celery task for email ingestion
+        task = fetch_and_process_emails_task.delay()
+
+        return {
+            "message": "Email ingestion triggered successfully",
+            "task_id": task.id,
+            "status": "queued",
+            "description": "All emails from inbox will be fetched and processed. Check task status or refresh /emails endpoint to see results.",
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error triggering email ingestion: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

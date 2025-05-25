@@ -8,8 +8,11 @@ from email.utils import parsedate_to_datetime
 from typing import List, Optional
 
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from ..models import FetchEmailResponseItem
+from ..db_models import Email
+from ..models import FetchEmailResponseItem, FetchProcessedEmailResponseItem, Flag
 
 load_dotenv()
 
@@ -21,6 +24,14 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+# Create synchronous database engine for email service
+SYNC_DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/cerebras_email_db"
+).replace("postgresql+asyncpg://", "postgresql://")
+
+sync_engine = create_engine(SYNC_DATABASE_URL, pool_pre_ping=True)
+SyncSessionLocal = sessionmaker(bind=sync_engine)
 
 
 def get_decoded_header(header_value: Optional[str]) -> str:
@@ -159,16 +170,49 @@ def send_email(sender: str, recipient: str, subject: str, body: str) -> bool:
         return False
 
 
-def fetch_email_by_id(email_id: str) -> FetchEmailResponseItem:
-    """Fetches a specific email by ID."""
-    return FetchEmailResponseItem(
-        id=email_id,
-        subject="Test Subject",
-        body="Test Body",
-        sender="Test Sender",
-        recipient="Test Recipient",
-        timestamp="2021-01-01T00:00:00Z",
-    )
+def fetch_email_by_id(email_id: str) -> FetchProcessedEmailResponseItem:
+    """Fetches a specific email by ID from the database."""
+    with SyncSessionLocal() as session:
+        try:
+            # Try to find by message_id first (which is what the API uses as 'id')
+            email = session.query(Email).filter(Email.message_id == email_id).first()
+
+            # If not found by message_id, try by database id
+            if not email:
+                try:
+                    db_id = int(email_id)
+                    email = session.query(Email).filter(Email.id == db_id).first()
+                except ValueError:
+                    # email_id is not a valid integer
+                    pass
+
+            if not email:
+                raise ValueError(f"Email with ID {email_id} not found")
+
+            # Convert flags from JSON to Flag objects
+            flags = []
+            if email.flags:
+                for flag_data in email.flags:
+                    flags.append(
+                        Flag(
+                            type=flag_data.get("type", ""),
+                            description=flag_data.get("description", ""),
+                        )
+                    )
+
+            return FetchProcessedEmailResponseItem(
+                id=email.message_id,
+                subject=email.subject,
+                body=email.body,
+                sender=email.sender,
+                recipient=email.recipient,
+                timestamp=email.timestamp.isoformat() if email.timestamp else "",
+                attachments=email.attachments or [],
+                summary=email.summary or "",
+                flags=flags,
+            )
+        except Exception as e:
+            raise ValueError(f"Error fetching email: {str(e)}")
 
 
 if __name__ == "__main__":

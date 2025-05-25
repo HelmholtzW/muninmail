@@ -1,9 +1,9 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Inbox, SendHorizonal, Mail, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Inbox, SendHorizonal, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Sidebar,
@@ -25,6 +25,8 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { toggleSidebar, open } = useSidebar();
+  const { theme, resolvedTheme } = useTheme();
+  const currentTheme = resolvedTheme || theme;
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r">
@@ -41,7 +43,13 @@ export function AppSidebar() {
             className="flex items-center gap-2 text-lg font-semibold text-foreground hover:text-primary transition-colors"
             aria-label="MuninMail Home"
           >
-            <Mail className="h-6 w-6 text-primary" />
+            <img 
+              src={currentTheme === 'dark' ? '/logo-white.png' : '/logo.png'}
+              alt="MuninMail Logo" 
+              width={24} 
+              height={24} 
+              className="h-6 w-6"
+            />
             <span className="group-data-[collapsible=icon]:hidden transition-opacity duration-200">
               MuninMail
             </span>

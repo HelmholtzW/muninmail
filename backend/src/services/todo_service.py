@@ -1,5 +1,7 @@
 from typing import List
+
 from sqlalchemy import select
+
 from ..database import AsyncSessionLocal
 from ..db_models import EmailTodo
 from ..models import TodoItem

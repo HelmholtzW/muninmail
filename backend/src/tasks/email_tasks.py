@@ -1,18 +1,44 @@
-import asyncio
 import json
+
+# Create synchronous database engine for Celery workers
+import os
 from datetime import datetime
 from typing import Any, Dict
 
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
+
 from ..celery_app import celery_app
-from ..database import AsyncSessionLocal
 from ..db_models import Email, EmailTodo
 from ..models import EmailContent, Flag
 from ..skills.extract_todos import extract_todos_skill
 from ..skills.get_flags import get_flags_skill
 from ..skills.summarize_email import summarize_email_skill
 
+load_dotenv()
 
-@celery_app.task(bind=True)
+# Use synchronous PostgreSQL connection for Celery workers
+SYNC_DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/cerebras_email_db"
+).replace("postgresql+asyncpg://", "postgresql://")
+
+sync_engine = create_engine(
+    SYNC_DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_size=5,
+    max_overflow=10,
+)
+SyncSessionLocal = sessionmaker(bind=sync_engine)
+
+
+@celery_app.task(
+    bind=True,
+    autoretry_for=(SQLAlchemyError,),
+    retry_kwargs={"max_retries": 3, "countdown": 60},
+)
 def process_email_task(self, email_data: Dict[str, Any]):
     """
     Celery task to process an email with AI services and save results to database.
@@ -22,13 +48,8 @@ def process_email_task(self, email_data: Dict[str, Any]):
             - message_id, subject, sender, recipient, body, timestamp, attachments
     """
     try:
-        # Update task status
-        self.update_state(
-            state="PROCESSING", meta={"step": "Starting email processing"}
-        )
-
-        # Run the async processing function
-        result = asyncio.run(process_email_async(email_data, self))
+        # Run the synchronous processing function
+        result = process_email_sync(email_data)
 
         return {
             "status": "SUCCESS",
@@ -36,25 +57,21 @@ def process_email_task(self, email_data: Dict[str, Any]):
             "message": "Email processed successfully",
         }
 
-    except Exception as e:
-        self.update_state(
-            state="FAILURE", meta={"error": str(e), "step": "Processing failed"}
-        )
+    except SQLAlchemyError as e:
+        # Database errors should be retried
+        raise self.retry(exc=e, countdown=60, max_retries=3)
+
+    except Exception:
+        # Other errors should not be retried
         raise
 
 
-async def process_email_async(email_data: Dict[str, Any], task=None):
+def process_email_sync(email_data: Dict[str, Any]):
     """
-    Async function to process email with AI and save to database.
+    Synchronous function to process email with AI and save to database.
     """
-    async with AsyncSessionLocal() as session:
+    with SyncSessionLocal() as session:
         try:
-            # Update task status
-            if task:
-                task.update_state(
-                    state="PROCESSING", meta={"step": "Saving email to database"}
-                )
-
             # Handle timestamp conversion - convert timezone-aware to timezone-naive
             timestamp = None
             if email_data["timestamp"]:
@@ -79,7 +96,7 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
             )
 
             session.add(email_obj)
-            await session.flush()  # Get the ID
+            session.flush()  # Get the ID
 
             # Create EmailContent for AI processing
             email_content = EmailContent(
@@ -92,17 +109,9 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
             )
 
             # Process with AI services
-            if task:
-                task.update_state(
-                    state="PROCESSING", meta={"step": "Generating summary"}
-                )
-
             # 1. Summarize email
             summary_response = json.loads(summarize_email_skill(email_content))
             email_obj.summary = summary_response["summary"]
-
-            if task:
-                task.update_state(state="PROCESSING", meta={"step": "Extracting todos"})
 
             # 2. Extract todos
             todos_response = json.loads(extract_todos_skill(email_content))
@@ -114,9 +123,6 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
                     due_date=todo_data.get("due_date"),
                 )
                 session.add(todo_obj)
-
-            if task:
-                task.update_state(state="PROCESSING", meta={"step": "Analyzing flags"})
 
             # 3. Get flags
             available_flags = [
@@ -132,7 +138,7 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
             for flag_data in flags_response["flags"]:
                 flags_data.append(
                     {
-                        "flag_type": flag_data["type"],
+                        "type": flag_data["type"],
                         "description": flag_data["description"],
                     }
                 )
@@ -142,22 +148,12 @@ async def process_email_async(email_data: Dict[str, Any], task=None):
             email_obj.processing_status = "completed"
             email_obj.is_processed = True
 
-            await session.commit()
-
-            if task:
-                task.update_state(
-                    state="PROCESSING", meta={"step": "Email processing completed"}
-                )
+            session.commit()
 
             return {"email_id": email_obj.id}
 
-        except Exception as e:
-            await session.rollback()
-            if task:
-                task.update_state(
-                    state="FAILURE",
-                    meta={"error": str(e), "step": "Database operation failed"},
-                )
+        except Exception:
+            session.rollback()
             raise
 
 

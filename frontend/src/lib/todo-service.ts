@@ -25,4 +25,4 @@ export async function getTodos(): Promise<Todo[]> {
         console.error("Failed to get todos:", error);
         return []; // Return empty array on error
     }
-} 
+}
