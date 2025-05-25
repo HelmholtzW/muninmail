@@ -2,7 +2,7 @@ import os
 
 from litellm import completion
 
-from ..models import EmailContent, ExtractTodosResponse
+from ..models.models import EmailContent, ExtractTodosResponse
 
 PROMPT_TEMPLATE = """
 You are a helpful assistant that extracts todo items from an email.

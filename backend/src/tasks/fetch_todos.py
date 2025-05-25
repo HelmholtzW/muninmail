@@ -3,8 +3,8 @@ from typing import List
 from sqlalchemy import select
 
 from ..database import AsyncSessionLocal
-from ..db_models import EmailTodo
-from ..models import TodoItem
+from ..models.db_models import EmailTodo
+from ..models.models import TodoItem
 
 
 async def fetch_todos() -> List[TodoItem]:

@@ -1,4 +1,7 @@
 import json
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -7,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import get_db
-from .db_models import Email
-from .models import (
+from .models.db_models import Email
+from .models.models import (
     ExtractTodosRequest,
     ExtractTodosResponse,
     FetchEmailsResponse,
@@ -21,22 +24,79 @@ from .models import (
     SummarizeResponse,
     TodoItem,
 )
-from .services.email_service import (
+from .email_logic.email_service import (
     fetch_email_by_id,
 )
-from .services.email_service import (
+from .email_logic.email_service import (
     send_email as send_email_service,
 )
-from .services.todo_service import fetch_todos as fetch_todos_service
-from .skills.extract_todos import extract_todos_skill
-from .skills.get_flags import get_flags_skill
-from .skills.summarize_email import summarize_email_skill
-from .tasks.email_tasks import fetch_and_process_emails_task
+from .tasks.fetch_todos import fetch_todos as fetch_todos_service
+from .ai_skills.extract_todos import extract_todos_skill
+from .ai_skills.get_flags import get_flags_skill
+from .ai_skills.summarize_email import summarize_email_skill
+
+# Import the email processing tasks
+from .tasks.email_fetcher_task import email_fetcher_task
+from .tasks.email_processor_task import email_processor_task
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Global variable to store background tasks
+background_tasks = []
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan context manager for startup and shutdown events.
+
+    🔍 ASYNCIO LEARNING: Background Tasks in FastAPI
+    - This is the modern way to handle startup/shutdown in FastAPI
+    - We start background tasks when the API starts
+    - Tasks run concurrently with the API server
+    - Proper cleanup on shutdown
+    """
+    # Startup
+    logger.info("🚀 Starting FastAPI application with background email service")
+    logger.info("🔍 ASYNCIO: Creating background tasks for email processing")
+
+    try:
+        # Create background tasks for email processing
+        email_fetcher = asyncio.create_task(email_fetcher_task())
+        email_processor = asyncio.create_task(email_processor_task())
+
+        # Store tasks so we can cancel them on shutdown
+        background_tasks.extend([email_fetcher, email_processor])
+
+        logger.info("✅ Email processing service started in background")
+        logger.info("   📨 Email fetcher: Running periodically")
+        logger.info("   🔄 Email processor: Running continuously")
+
+        yield  # FastAPI app runs here
+
+    finally:
+        # Shutdown
+        logger.info("🛑 Shutting down background email service")
+
+        # Cancel all background tasks
+        for task in background_tasks:
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+
+        logger.info("✅ Background tasks stopped cleanly")
+
 
 app = FastAPI(
     title="Email Agents API",
     description="API for email processing tasks including summarization, todo extraction, and flagging",
     version="1.0.0",
+    lifespan=lifespan,  # 🔍 This enables background tasks
 )
 
 # Add CORS middleware
@@ -65,10 +125,37 @@ async def root():
             "/emails",
             "/send_email",
             "/todos",
-            "/trigger-ingestion",
+            "/status",  # New endpoint for service status
         ],
-        "description": "API for email processing tasks",
+        "description": "API for email processing tasks with background email service",
     }
+
+
+@app.get("/status")
+async def get_status():
+    """
+    Get the status of the background email processing service.
+
+    🔍 ASYNCIO LEARNING: Monitoring background tasks
+    - Shows how to check if background tasks are still running
+    - Useful for health checks and monitoring
+    """
+    status = {
+        "api": "running",
+        "background_tasks": {
+            "total": len(background_tasks),
+            "running": sum(1 for task in background_tasks if not task.done()),
+            "completed": sum(
+                1 for task in background_tasks if task.done() and not task.cancelled()
+            ),
+            "cancelled": sum(1 for task in background_tasks if task.cancelled()),
+            "failed": sum(
+                1 for task in background_tasks if task.done() and task.exception()
+            ),
+        },
+    }
+
+    return status
 
 
 @app.post("/summarize", response_model=SummarizeResponse)
@@ -161,19 +248,22 @@ async def get_emails(db: AsyncSession = Depends(get_db)):
 
 
 @app.post("/send_email", response_model=SendEmailResponse)
-async def post_send_email(request: SendEmailRequest):
-    """Sends an email using the configured SMTP server."""
+async def send_email_endpoint(request: SendEmailRequest):
+    """Send an email via SMTP"""
     try:
         success = send_email_service(
-            request.sender, request.recipient, request.subject, request.body
+            sender=request.sender,
+            recipient=request.recipient,
+            subject=request.subject,
+            body=request.body,
         )
+
         if success:
-            return SendEmailResponse(success=True, message="Email sent successfully.")
+            return SendEmailResponse(success=True, message="Email sent successfully")
         else:
-            # The email_service already prints the error, so a generic message here is fine.
-            raise HTTPException(status_code=500, detail="Failed to send email.")
+            return SendEmailResponse(success=False, message="Failed to send email")
+
     except Exception as e:
-        # Catch any other unexpected errors during the process
         raise HTTPException(status_code=500, detail=f"Error sending email: {str(e)}")
 
 
@@ -195,37 +285,3 @@ async def get_todos():
         return todos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching todos: {str(e)}")
-
-
-@app.post("/trigger-ingestion")
-async def trigger_email_ingestion():
-    """
-    Manually trigger email ingestion from the configured IMAP inbox.
-
-    This endpoint will:
-    1. Fetch all emails from the IMAP server
-    2. Queue them for AI processing (summary, todos, flags)
-    3. Save processed results to the database
-
-    Returns the task ID for tracking the ingestion process.
-    """
-    try:
-        # Trigger the Celery task for email ingestion
-        task = fetch_and_process_emails_task.delay()
-
-        return {
-            "message": "Email ingestion triggered successfully",
-            "task_id": task.id,
-            "status": "queued",
-            "description": "All emails from inbox will be fetched and processed. Check task status or refresh /emails endpoint to see results.",
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error triggering email ingestion: {str(e)}"
-        )
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)

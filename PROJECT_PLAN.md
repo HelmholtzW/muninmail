@@ -1,4 +1,4 @@
-# 🐦‍⬛✉️ MuninMail Project Plan (Updated)
+# 🐦‍⬛✉️ MuninMail Project Plan
 
 ## 🚩 Project Goals
 
@@ -8,10 +8,9 @@
 
 ---
 
-## 📅 Project Phases (Updated)
+## 📅 Project Phases
 
 ### Phase 1: Core Email Client Architecture
-**Status: Already implemented**
 
 - [ ] Protocol Adaptors:
   - [x] IMAP/SMTP integration (`email_service.py`)
@@ -20,38 +19,19 @@
   - [ ] OAuth2 authentication foundations
 
 - [x] FastAPI Backend:
-  - [x] RESTful API endpoints for email operations
-  - [x] Email fetching, sending, and processing
 - [x] Minimal Next.js Frontend:
-  - [x] Modern React-based UI with shadcn/ui components
-  - [x] Email inbox, compose, and management interfaces
 
 ### Phase 2: Local AI Integration
-**Status: Core AI features implemented**
 
 - [x] AI Skills Implementation:
   - [x] Email summarization (`summarize_email.py`)
   - [x] Todo extraction (`extract_todos.py`) 
   - [x] Flag detection and tagging (`get_flags.py`)
-- [x] Model Integration:
-  - [x] Connected to Cerebras API for AI processing
-  - [x] Structured JSON responses for all AI operations
 
 ### 🚧 Phase 3: Database Migration (SQLite Transition)
-**Current Priority: Simplify data layer**
-
-- [ ] **Replace PostgreSQL with SQLite**:
-  - [ ] Migrate `database.py` to use SQLite with AsyncIO
-  - [ ] Update `db_models.py` for SQLite compatibility
-  - [ ] Create migration scripts from current PostgreSQL schema
-- [ ] **Simplify Data Operations**:
-  - [ ] Remove PostgreSQL-specific features
-  - [ ] Optimize for single-user, local storage
-  - [ ] Implement proper SQLite WAL mode for concurrent access
+- [x] **Replace PostgreSQL with SQLite**
 
 ### 🚧 Phase 4: Background Processing Modernization
-**Current Priority: Replace Celery infrastructure**
-
 - [ ] **Replace Celery with AsyncIO**:
   - [ ] Migrate `email_tasks.py` to pure asyncio queues
   - [ ] Implement simple task scheduling with `asyncio.create_task()`
@@ -62,7 +42,6 @@
   - [ ] Background email sync with configurable intervals
 
 ### 🔄 Phase 5: Architecture Simplification
-**Status: Planning**
 
 - [ ] **Remove Docker Dependencies**:
   - [ ] Create standalone Python application
@@ -74,7 +53,6 @@
   - [ ] Configurable storage limits and cleanup
 
 ### 🔄 Phase 6: Enhanced Local AI Pipeline
-**Status: To be refined**
 
 - [ ] **Improved AI Features**:
   - [ ] Add custom flag definitions
@@ -89,7 +67,6 @@
 
 
 ### 💰 Phase 7: Moentization
-**Status: Setting up payment logic**
 
 - [ ] **Adding Credit Logic***:
   - [ ] Setting up tracking for user credits
@@ -98,7 +75,6 @@
   - [ ] Integrating Strip to buy more credits
 
 ### 🔄 Phase 8: Native Mac Application Framework
-**Status: Planning for final stage**
 
 - [ ] **Electron/Tauri Integration**:
   - [ ] Choose between Electron and Tauri for native app wrapper
@@ -110,7 +86,6 @@
   - [ ] Mac-specific features (Touch Bar, shortcuts)
 
 ### 🎯 Phase 9: .dmg Distribution Preparation
-**Status: Final goal**
 
 - [ ] **Build System**:
   - [ ] Create automated build pipeline for Mac
@@ -126,7 +101,6 @@
   - [ ] Background processing without blocking UI
 
 ### 🔒 Phase 10: Security & Privacy (Ongoing)
-**Status: Continuous**
 
 - [ ] **Local Data Security**:
   - [ ] SQLite database encryption

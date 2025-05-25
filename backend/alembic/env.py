@@ -38,7 +38,6 @@ if config.config_file_name is not None:
 
 # Import our models for autogenerate support
 from src.database import Base
-from src import db_models  # Import models to register them with Base
 
 # Set target metadata for autogenerate
 target_metadata = Base.metadata

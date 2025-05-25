@@ -12,8 +12,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 
-from ..db_models import Email
-from ..models import FetchEmailResponseItem, FetchProcessedEmailResponseItem, Flag
+from ..models.db_models import Email
+from ..models.models import (
+    FetchEmailResponseItem,
+    FetchProcessedEmailResponseItem,
+    Flag,
+)
+import asyncio
+import aiofiles  # We might need this for async file operations
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
@@ -42,6 +52,28 @@ sync_engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 SyncSessionLocal = sessionmaker(bind=sync_engine)
+
+
+async def fetch_emails_async() -> List[FetchEmailResponseItem]:
+    """
+    Async version of email fetching.
+
+    🔍 ASYNCIO LEARNING: Converting blocking I/O to async
+    - IMAP operations are I/O bound (network calls)
+    - We use asyncio.to_thread() to run sync code in a thread pool
+    - This prevents blocking the event loop
+    """
+
+    # 🔍 IMPORTANT ASYNCIO PATTERN:
+    # When you have synchronous I/O that can't be made async,
+    # use asyncio.to_thread() to run it in a thread pool
+    try:
+        emails = await asyncio.to_thread(_fetch_emails_sync)
+        logger.info(f"Fetched {len(emails)} emails from IMAP server")
+        return emails
+    except Exception as e:
+        logger.error(f"Error fetching emails: {e}")
+        return []
 
 
 def get_decoded_header(header_value: Optional[str]) -> str:
@@ -103,7 +135,7 @@ def get_attachment_filenames(msg: email.message.Message) -> List[str]:
     return attachments
 
 
-def fetch_emails() -> List[FetchEmailResponseItem]:
+def _fetch_emails_sync() -> List[FetchEmailResponseItem]:
     """Fetches emails from the IMAP server and parses them into FetchEmailResponseItem objects."""
     if not all([IMAP_SERVER, IMAP_USERNAME, IMAP_PASSWORD]):
         print("Error: IMAP server, username, or password not configured in .env file.")
@@ -228,7 +260,7 @@ def fetch_email_by_id(email_id: str) -> FetchProcessedEmailResponseItem:
 if __name__ == "__main__":
     # Example usage (for testing purposes)
     print("Fetching emails...")
-    retrieved_emails: List[FetchEmailResponseItem] = fetch_emails()
+    retrieved_emails: List[FetchEmailResponseItem] = _fetch_emails_sync()
     if retrieved_emails:
         print(f"Fetched {len(retrieved_emails)} emails.")
         for email_item in retrieved_emails:
