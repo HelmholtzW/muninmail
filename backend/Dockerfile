@@ -22,7 +22,7 @@ RUN pip install uv
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies
+# Install Python dependencies using uv
 RUN uv sync --frozen
 
 # Copy project files
@@ -43,7 +43,8 @@ RUN echo '#!/bin/bash\n\
 
 RUN chmod +x /wait-for-postgres.sh
 
-# Set the PATH to include the virtual environment
+# Activate the virtual environment by setting PATH and VIRTUAL_ENV
+ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose port

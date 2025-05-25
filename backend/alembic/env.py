@@ -21,7 +21,14 @@ config = context.config
 database_url = os.getenv("DATABASE_URL")
 if database_url:
     # Convert async URL to sync for Alembic
-    sync_database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+    if "postgresql+asyncpg://" in database_url:
+        sync_database_url = database_url.replace(
+            "postgresql+asyncpg://", "postgresql://"
+        )
+    elif "sqlite+aiosqlite://" in database_url:
+        sync_database_url = database_url.replace("sqlite+aiosqlite://", "sqlite://")
+    else:
+        sync_database_url = database_url
     config.set_main_option("sqlalchemy.url", sync_database_url)
 
 # Interpret the config file for Python logging.
@@ -31,6 +38,7 @@ if config.config_file_name is not None:
 
 # Import our models for autogenerate support
 from src.database import Base
+from src import db_models  # Import models to register them with Base
 
 # Set target metadata for autogenerate
 target_metadata = Base.metadata

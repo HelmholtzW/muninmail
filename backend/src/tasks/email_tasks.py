@@ -19,17 +19,20 @@ from ..skills.summarize_email import summarize_email_skill
 
 load_dotenv()
 
-# Use synchronous PostgreSQL connection for Celery workers
-SYNC_DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/cerebras_email_db"
-).replace("postgresql+asyncpg://", "postgresql://")
+# Use synchronous SQLite connection for Celery workers
+from pathlib import Path
+
+# Default to SQLite database in the backend directory
+DB_PATH = Path(__file__).parent.parent.parent / "muninmail.db"
+SYNC_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}").replace(
+    "sqlite+aiosqlite://", "sqlite://"
+)
 
 sync_engine = create_engine(
     SYNC_DATABASE_URL,
     pool_pre_ping=True,
-    pool_recycle=300,
-    pool_size=5,
-    max_overflow=10,
+    # SQLite specific connection args
+    connect_args={"check_same_thread": False},
 )
 SyncSessionLocal = sessionmaker(bind=sync_engine)
 

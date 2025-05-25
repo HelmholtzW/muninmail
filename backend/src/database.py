@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -8,15 +9,17 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 # Database configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/cerebras_email_db"
-)
+# Default to SQLite database in the backend directory
+DB_PATH = Path(__file__).parent.parent / "muninmail.db"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
 
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
     echo=True,
     future=True,  # Set to False in production
+    # SQLite specific options
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
 )
 
 # Create async session factory

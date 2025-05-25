@@ -57,6 +57,7 @@ class EmailTodo(Base):
     priority = Column(String)  # high, medium, low
     due_date = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed = Column(Boolean, default=False)
 
     # Relationship
     email = relationship("Email", back_populates="todos")

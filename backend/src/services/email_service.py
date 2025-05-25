@@ -10,6 +10,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from pathlib import Path
 
 from ..db_models import Email
 from ..models import FetchEmailResponseItem, FetchProcessedEmailResponseItem, Flag
@@ -26,11 +27,20 @@ SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 # Create synchronous database engine for email service
-SYNC_DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+asyncpg://user:password@localhost/cerebras_email_db"
-).replace("postgresql+asyncpg://", "postgresql://")
+from pathlib import Path
 
-sync_engine = create_engine(SYNC_DATABASE_URL, pool_pre_ping=True)
+# Default to SQLite database in the backend directory
+DB_PATH = Path(__file__).parent.parent.parent / "muninmail.db"
+SYNC_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}").replace(
+    "sqlite+aiosqlite://", "sqlite://"
+)
+
+sync_engine = create_engine(
+    SYNC_DATABASE_URL,
+    pool_pre_ping=True,
+    # SQLite specific connection args
+    connect_args={"check_same_thread": False},
+)
 SyncSessionLocal = sessionmaker(bind=sync_engine)
 
 

@@ -1,22 +1,4 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15
-    container_name: cerebras-postgres
-    environment:
-      POSTGRES_DB: cerebras_email_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d cerebras_email_db" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis for Celery
   redis:
     image: redis:7-alpine
@@ -40,7 +22,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/muninmail.db
       - REDIS_URL=redis://redis:6379/0
       - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
       - IMAP_USERNAME=${IMAP_USERNAME}
@@ -52,25 +34,29 @@ services:
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+    volumes:
+      - sqlite_data:/app/data
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 40s
     command: >
       sh -c "
-        echo 'Waiting for database to be ready...' &&
-        python -c 'import time; time.sleep(10)' &&
+        echo 'Creating data directory...' &&
+        mkdir -p /app/data &&
+        chmod 755 /app/data &&
+        echo 'Creating database file...' &&
+        touch /app/data/muninmail.db &&
+        chmod 664 /app/data/muninmail.db &&
         echo 'Running database migrations...' &&
-        alembic -c alembic.ini upgrade head &&
+        uv run alembic -c alembic.ini upgrade head &&
         echo 'Starting FastAPI server...' &&
-        uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+        uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
   # Next.js Frontend Application
@@ -88,8 +74,6 @@ services:
     depends_on:
       backend:
         condition: service_started
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
@@ -101,7 +85,7 @@ services:
       dockerfile: Dockerfile
     container_name: cerebras-celery-worker
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/muninmail.db
       - REDIS_URL=redis://redis:6379/0
       - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
       - IMAP_USERNAME=${IMAP_USERNAME}
@@ -113,17 +97,19 @@ services:
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+    volumes:
+      - sqlite_data:/app/data
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
+        condition: service_healthy
+      backend:
         condition: service_healthy
     command: >
       sh -c "
-        echo 'Waiting for services to be ready...' &&
-        python -c 'import time; time.sleep(15)' &&
+        echo 'Waiting for backend to initialize database...' &&
+        python -c 'import time; time.sleep(30)' &&
         echo 'Starting Celery worker...' &&
-        celery -A src.celery_app worker --loglevel=info --concurrency=2
+        uv run celery -A src.celery_app worker --loglevel=info --concurrency=2
       "
 
   # Celery Beat for scheduled tasks (optional)
@@ -133,7 +119,7 @@ services:
       dockerfile: Dockerfile
     container_name: cerebras-celery-beat
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@postgres:5432/cerebras_email_db
+      - DATABASE_URL=sqlite+aiosqlite:///app/data/muninmail.db
       - REDIS_URL=redis://redis:6379/0
       - IMAP_SERVER=${IMAP_SERVER:-imap.gmail.com}
       - IMAP_USERNAME=${IMAP_USERNAME}
@@ -141,17 +127,19 @@ services:
       - DEBUG=${DEBUG:-True}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+    volumes:
+      - sqlite_data:/app/data
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
+        condition: service_healthy
+      backend:
         condition: service_healthy
     command: >
       sh -c "
-        echo 'Waiting for services to be ready...' &&
-        python -c 'import time; time.sleep(20)' &&
+        echo 'Waiting for backend to initialize database...' &&
+        python -c 'import time; time.sleep(35)' &&
         echo 'Starting Celery beat scheduler...' &&
-        celery -A src.celery_app beat --loglevel=info
+        uv run celery -A src.celery_app beat --loglevel=info
       "
 
   # Celery Flower for monitoring (optional)
@@ -172,12 +160,12 @@ services:
         echo 'Waiting for Redis to be ready...' &&
         python -c 'import time; time.sleep(10)' &&
         echo 'Starting Celery Flower...' &&
-        celery -A src.celery_app flower --host=0.0.0.0 --port=5555
+        uv run celery -A src.celery_app flower --host=0.0.0.0 --port=5555
       "
 
 volumes:
-  postgres_data:
   redis_data:
+  sqlite_data:
 
 
 networks:

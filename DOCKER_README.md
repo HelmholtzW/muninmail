@@ -85,7 +85,7 @@ docker-compose exec backend alembic upgrade head
 docker-compose exec backend alembic revision --autogenerate -m "description"
 
 # Access PostgreSQL directly
-docker-compose exec postgres psql -U postgres -d cerebras_email_db
+docker-compose exec postgres psql -U postgres -d muninmail_db
 ```
 
 ### **Celery Operations**
