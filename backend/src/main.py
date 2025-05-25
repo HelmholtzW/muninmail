@@ -1,5 +1,5 @@
-import json
 import asyncio
+import json
 import logging
 from contextlib import asynccontextmanager
 from typing import List
@@ -9,7 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .ai_skills.extract_todos import extract_todos_skill
+from .ai_skills.get_flags import get_flags_skill
+from .ai_skills.summarize_email import summarize_email_skill
 from .database import get_db
+from .email_logic.email_service import fetch_email_by_id
+from .email_logic.email_service import send_email as send_email_service
 from .models.db_models import Email
 from .models.models import (
     ExtractTodosRequest,
@@ -24,20 +29,9 @@ from .models.models import (
     SummarizeResponse,
     TodoItem,
 )
-from .email_logic.email_service import (
-    fetch_email_by_id,
-)
-from .email_logic.email_service import (
-    send_email as send_email_service,
-)
-from .tasks.fetch_todos import fetch_todos as fetch_todos_service
-from .ai_skills.extract_todos import extract_todos_skill
-from .ai_skills.get_flags import get_flags_skill
-from .ai_skills.summarize_email import summarize_email_skill
-
-# Import the email processing tasks
 from .tasks.email_fetcher_task import email_fetcher_task
 from .tasks.email_processor_task import email_processor_task
+from .tasks.fetch_todos import fetch_todos as fetch_todos_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -223,7 +217,7 @@ async def get_emails(db: AsyncSession = Depends(get_db)):
     """Fetches all processed emails from the postgres database."""
     try:
         # Query all emails from the database
-        result = await db.execute(select(Email).where(Email.is_processed == True))
+        result = await db.execute(select(Email).where(Email.is_processed == True))  # noqa: E712
         emails = result.scalars().all()
 
         # Convert to response format

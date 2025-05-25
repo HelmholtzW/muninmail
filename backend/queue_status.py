@@ -8,17 +8,17 @@ It demonstrates how the database-as-queue pattern works.
 🔍 ASYNCIO LEARNING: This shows how to do simple async database queries
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+from sqlalchemy import func, select
+
 from src.database import AsyncSessionLocal
 from src.models.db_models import Email
-from sqlalchemy import select, func
-from datetime import datetime
 
 
 async def show_queue_status():

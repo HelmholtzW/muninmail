@@ -5,6 +5,7 @@ from ..tasks.email_fetcher_task import email_fetcher_task
 from ..tasks.email_processor_task import email_processor_task
 
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 

@@ -12,14 +12,10 @@ It replaces the previous Celery+Redis setup with a simple, lightweight asyncio s
 - Clear separation of concerns
 """
 
-import sys
 import logging
-from pathlib import Path
+import sys
 
-# Add src to path so we can import our modules
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-from src.services.email_processor_service import main
+from .email_processor_service import main
 
 # Configure logging for the service
 logging.basicConfig(

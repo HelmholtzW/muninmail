@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,
     future=True,  # Set to False in production
     # SQLite specific options
     connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
