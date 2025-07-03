@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+- Use pnpm for package management
+- Explain your steps thoroughly. The user is a python developer that wants to learn typescript with this project.
+- Use the PROJECT_PLAN.md to get an overview of the project and next steps.
