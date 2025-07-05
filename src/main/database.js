@@ -75,17 +75,35 @@ class EmailDatabase {
       )
     `;
 
+        // Create LLM configurations table
+        const createLLMConfigsTable = `
+      CREATE TABLE IF NOT EXISTS llm_configs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT NOT NULL,
+        model_name TEXT NOT NULL,
+        api_key TEXT NOT NULL,
+        base_url TEXT,
+        is_active BOOLEAN DEFAULT 0,
+        config_data TEXT, -- JSON string for additional configuration
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
         // Create indexes for better performance
         const createIndexes = [
             'CREATE INDEX IF NOT EXISTS idx_emails_message_id ON emails (message_id)',
             'CREATE INDEX IF NOT EXISTS idx_emails_sender ON emails (sender_email)',
             'CREATE INDEX IF NOT EXISTS idx_emails_date ON emails (date_received)',
             'CREATE INDEX IF NOT EXISTS idx_emails_folder ON emails (folder)',
-            'CREATE INDEX IF NOT EXISTS idx_attachments_email_id ON attachments (email_id)'
+            'CREATE INDEX IF NOT EXISTS idx_attachments_email_id ON attachments (email_id)',
+            'CREATE INDEX IF NOT EXISTS idx_llm_configs_provider ON llm_configs (provider)',
+            'CREATE INDEX IF NOT EXISTS idx_llm_configs_active ON llm_configs (is_active)'
         ];
 
         this.db.exec(createEmailsTable);
         this.db.exec(createAttachmentsTable);
+        this.db.exec(createLLMConfigsTable);
 
         createIndexes.forEach(indexSql => {
             this.db.exec(indexSql);
@@ -180,6 +198,137 @@ class EmailDatabase {
         } catch (error) {
             console.error('Error fetching attachments:', error);
             return [];
+        }
+    }
+
+    // LLM Configuration operations
+    insertLLMConfig(configData) {
+        const stmt = this.db.prepare(`
+      INSERT INTO llm_configs (provider, model_name, api_key, base_url, is_active, config_data)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+        try {
+            const result = stmt.run(
+                configData.provider,
+                configData.modelName,
+                configData.apiKey,
+                configData.baseUrl || null,
+                configData.isActive || 0,
+                configData.configData ? JSON.stringify(configData.configData) : null
+            );
+
+            return result.lastInsertRowid;
+        } catch (error) {
+            console.error('Error inserting LLM config:', error);
+            return null;
+        }
+    }
+
+    getAllLLMConfigs() {
+        try {
+            const stmt = this.db.prepare(`
+        SELECT * FROM llm_configs 
+        ORDER BY created_at DESC
+      `);
+            return stmt.all().map(config => ({
+                ...config,
+                configData: config.config_data ? JSON.parse(config.config_data) : null
+            }));
+        } catch (error) {
+            console.error('Error fetching LLM configs:', error);
+            return [];
+        }
+    }
+
+    getLLMConfigById(id) {
+        try {
+            const stmt = this.db.prepare('SELECT * FROM llm_configs WHERE id = ?');
+            const config = stmt.get(id);
+            if (config) {
+                return {
+                    ...config,
+                    configData: config.config_data ? JSON.parse(config.config_data) : null
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching LLM config by id:', error);
+            return null;
+        }
+    }
+
+    getActiveLLMConfig() {
+        try {
+            const stmt = this.db.prepare('SELECT * FROM llm_configs WHERE is_active = 1 LIMIT 1');
+            const config = stmt.get();
+            if (config) {
+                return {
+                    ...config,
+                    configData: config.config_data ? JSON.parse(config.config_data) : null
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching active LLM config:', error);
+            return null;
+        }
+    }
+
+    updateLLMConfig(id, configData) {
+        const stmt = this.db.prepare(`
+      UPDATE llm_configs 
+      SET provider = ?, model_name = ?, api_key = ?, base_url = ?, is_active = ?, config_data = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+
+        try {
+            const result = stmt.run(
+                configData.provider,
+                configData.modelName,
+                configData.apiKey,
+                configData.baseUrl || null,
+                configData.isActive || 0,
+                configData.configData ? JSON.stringify(configData.configData) : null,
+                id
+            );
+
+            return result.changes > 0;
+        } catch (error) {
+            console.error('Error updating LLM config:', error);
+            return false;
+        }
+    }
+
+    setActiveLLMConfig(id) {
+        const transaction = this.db.transaction(() => {
+            // First, deactivate all configs
+            const deactivateStmt = this.db.prepare('UPDATE llm_configs SET is_active = 0');
+            deactivateStmt.run();
+
+            // Then activate the specified config
+            const activateStmt = this.db.prepare('UPDATE llm_configs SET is_active = 1 WHERE id = ?');
+            return activateStmt.run(id);
+        });
+
+        try {
+            const result = transaction();
+            return result.changes > 0;
+        } catch (error) {
+            console.error('Error setting active LLM config:', error);
+            return false;
+        }
+    }
+
+    deleteLLMConfig(id) {
+        const stmt = this.db.prepare('DELETE FROM llm_configs WHERE id = ?');
+
+        try {
+            const result = stmt.run(id);
+            return result.changes > 0;
+        } catch (error) {
+            console.error('Error deleting LLM config:', error);
+            return false;
         }
     }
 
