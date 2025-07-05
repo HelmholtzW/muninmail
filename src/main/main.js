@@ -4,10 +4,12 @@ const isDev = require('electron-is-dev');
 const EmailDatabase = require('./database');
 const EmailManager = require('./email-manager');
 const { ProviderConfigHelper } = require('./email-providers/provider-configs');
+const LLMService = require('./llm-service');
 
 let mainWindow;
 let database;
 let emailManager;
+let llmService;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -51,6 +53,9 @@ app.whenReady().then(() => {
 
     // Initialize email manager
     emailManager = new EmailManager(database);
+
+    // Initialize LLM service
+    llmService = new LLMService(database);
 
     createWindow();
 });
@@ -196,6 +201,97 @@ ipcMain.handle('email-get-folders', async (event, accountId) => {
     } catch (error) {
         console.error('Error getting folders:', error);
         return [];
+    }
+});
+
+// LLM Configuration IPC handlers
+ipcMain.handle('llm-add-config', async (event, configData) => {
+    try {
+        return await llmService.addLLMConfig(configData);
+    } catch (error) {
+        console.error('Error adding LLM config:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('llm-update-config', async (event, id, configData) => {
+    try {
+        return await llmService.updateLLMConfig(id, configData);
+    } catch (error) {
+        console.error('Error updating LLM config:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('llm-delete-config', async (event, id) => {
+    try {
+        return await llmService.deleteLLMConfig(id);
+    } catch (error) {
+        console.error('Error deleting LLM config:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('llm-set-active-config', async (event, id) => {
+    try {
+        return await llmService.setActiveLLMConfig(id);
+    } catch (error) {
+        console.error('Error setting active LLM config:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('llm-get-all-configs', async () => {
+    try {
+        return await llmService.getAllLLMConfigs();
+    } catch (error) {
+        console.error('Error getting all LLM configs:', error);
+        return [];
+    }
+});
+
+ipcMain.handle('llm-get-config-by-id', async (event, id) => {
+    try {
+        return await llmService.getLLMConfigById(id);
+    } catch (error) {
+        console.error('Error getting LLM config by ID:', error);
+        return null;
+    }
+});
+
+ipcMain.handle('llm-get-active-config', async () => {
+    try {
+        return llmService.getActiveLLMConfig();
+    } catch (error) {
+        console.error('Error getting active LLM config:', error);
+        return null;
+    }
+});
+
+ipcMain.handle('llm-test-connection', async (event, id) => {
+    try {
+        return await llmService.testLLMConnection(id);
+    } catch (error) {
+        console.error('Error testing LLM connection:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('llm-get-providers', async () => {
+    try {
+        return llmService.getAllProviders();
+    } catch (error) {
+        console.error('Error getting LLM providers:', error);
+        return [];
+    }
+});
+
+ipcMain.handle('llm-get-provider-info', async (event, providerKey) => {
+    try {
+        return llmService.getProviderInfo(providerKey);
+    } catch (error) {
+        console.error('Error getting provider info:', error);
+        return null;
     }
 });
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import AddEmailAccount from './components/AddEmailAccount';
 import EmailList from './components/EmailList';
+import LLMConfiguration from './components/LLMConfiguration';
 
 function App() {
     const [version, setVersion] = useState('');
@@ -39,6 +40,10 @@ function App() {
                         <AddEmailAccount onAccountAdded={handleAccountAdded} />
                     </div>
                     <EmailList refreshTrigger={refreshTrigger} />
+                </div>
+                
+                <div className="llm-config-section">
+                    <LLMConfiguration />
                 </div>
             </main>
         </div>

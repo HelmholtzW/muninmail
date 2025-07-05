@@ -55,6 +55,16 @@
     font-weight: 600;
 }
 
+/* LLM Configuration Section */
+.llm-config-section {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .App-main {
@@ -69,5 +79,10 @@
 
     .email-app-header h2 {
         text-align: center;
+    }
+    
+    .llm-config-section {
+        margin: 20px auto 0;
+        padding: 15px;
     }
 }

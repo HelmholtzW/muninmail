@@ -28,5 +28,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
         // Provider Configurations
         getProviderConfigs: () => ipcRenderer.invoke('email-get-provider-configs'),
         getProviderConfig: (providerKey) => ipcRenderer.invoke('email-get-provider-config', providerKey)
+    },
+
+    // LLM Configuration Management
+    llm: {
+        addConfig: (configData) => ipcRenderer.invoke('llm-add-config', configData),
+        updateConfig: (id, configData) => ipcRenderer.invoke('llm-update-config', id, configData),
+        deleteConfig: (id) => ipcRenderer.invoke('llm-delete-config', id),
+        setActiveConfig: (id) => ipcRenderer.invoke('llm-set-active-config', id),
+        getAllConfigs: () => ipcRenderer.invoke('llm-get-all-configs'),
+        getConfigById: (id) => ipcRenderer.invoke('llm-get-config-by-id', id),
+        getActiveConfig: () => ipcRenderer.invoke('llm-get-active-config'),
+        testConnection: (id) => ipcRenderer.invoke('llm-test-connection', id),
+        getProviders: () => ipcRenderer.invoke('llm-get-providers'),
+        getProviderInfo: (providerKey) => ipcRenderer.invoke('llm-get-provider-info', providerKey)
     }
 }); 
