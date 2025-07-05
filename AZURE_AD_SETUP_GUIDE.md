@@ -1,11 +1,11 @@
-# Azure AD Setup Guide for Outlook Graph API
+# Azure AD Setup Guide for Developers
 
-This guide will help you set up an Azure AD application registration to use the Outlook Graph API integration in Munin Email.
+This guide is for **developers** who want to build and distribute Munin Email with Microsoft Graph integration. End users do not need to follow this guide.
 
 ## Prerequisites
 
-- A Microsoft account (Outlook, Hotmail, or Office 365)
-- Access to the Azure Portal
+- Developer access to Azure Portal
+- Ability to create Azure AD app registrations
 
 ## Step 1: Create Azure AD Application
 
@@ -57,21 +57,19 @@ This guide will help you set up an Azure AD application registration to use the 
    - If your organization requires admin consent, click **Grant admin consent for [Your Organization]**
    - If you're using a personal account, this step is usually not required
 
-## Step 3: Use in Munin Email
+## Step 3: Configure Munin Email
 
-1. **Add Outlook Account**
-   - In Munin Email, click **Add Email Account**
-   - Select **Outlook (Microsoft Graph API)** from the provider dropdown
-   - Enter your Outlook email address
-   - Paste the **Client ID** you copied from Azure AD
-   - Click **Add Account**
+1. **Set Environment Variable**
+   - Set the `AZURE_CLIENT_ID` environment variable to your Application (client) ID
+   - For development: Create a `.env` file in the project root:
+     ```
+     AZURE_CLIENT_ID=your-client-id-here
+     ```
+   - For production builds: Set the environment variable on the build system
 
-2. **Complete OAuth Flow**
-   - A browser window will open asking you to sign in to Microsoft
-   - Sign in with your Outlook account
-   - Grant the requested permissions
-   - The browser will redirect and you can close it
-   - Your account should now be connected!
+2. **Build and Distribute**
+   - Users can now simply select "Microsoft Outlook" and click "Login with Microsoft"
+   - No additional setup required for end users
 
 ## Common Issues and Solutions
 

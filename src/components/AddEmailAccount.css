@@ -121,6 +121,29 @@
     text-decoration: underline;
 }
 
+.oauth-info {
+    margin-bottom: 20px;
+}
+
+.oauth-message {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.oauth-message strong {
+    color: #1976d2;
+    font-size: 16px;
+}
+
+.oauth-message p {
+    margin: 8px 0 0 0;
+    color: #424242;
+    font-size: 14px;
+}
+
 .provider-note {
     margin-top: 8px;
     padding: 10px;

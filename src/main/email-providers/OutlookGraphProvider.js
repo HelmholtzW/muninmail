@@ -462,9 +462,14 @@ class OutlookGraphProvider extends BaseEmailProvider {
             throw new Error('Email address is required');
         }
 
-        // For Graph API, we don't need password but we need client ID
+        // For Graph API, we need client ID (either from config or stored token)
         if (!this.config.clientId && !this.config.accessToken) {
-            throw new Error('Client ID or access token is required');
+            throw new Error('Client ID is required for Microsoft Graph authentication');
+        }
+
+        // Check if client ID is the placeholder value
+        if (this.config.clientId === 'YOUR_AZURE_CLIENT_ID_HERE') {
+            throw new Error('Azure Client ID is not configured. Please set AZURE_CLIENT_ID environment variable.');
         }
 
         return true;

@@ -14,7 +14,12 @@ An AI-native, local-first email client built with Electron, React, and Vite.
 1. Clone the repository and navigate to the project directory
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
+   ```
+3. Set up environment variables (for Microsoft Graph integration):
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your Azure Client ID
    ```
 
 ### Development
@@ -22,7 +27,7 @@ An AI-native, local-first email client built with Electron, React, and Vite.
 To run the application in development mode:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 This will:
@@ -35,8 +40,8 @@ This will:
 To build the application for production:
 
 ```bash
-npm run build
-npm run build:electron
+pnpm run build
+pnpm run build:electron
 ```
 
 ## Development Phases
@@ -63,12 +68,25 @@ This project is being developed in phases as outlined in PROJECT_PLAN.md:
 
 ### Modern OAuth Integration
 - **Microsoft Outlook** (via Microsoft Graph API)
-  - ✅ Secure OAuth 2.0 authentication
-  - ✅ No passwords required
+  - ✅ One-click OAuth 2.0 authentication
+  - ✅ No passwords or app passwords required
   - ✅ Enhanced security and features
   - ✅ Automatic token refresh
+  - ✅ Works with personal and business accounts
 
-To use Outlook with Graph API, you'll need to set up an Azure AD application. See [AZURE_AD_SETUP_GUIDE.md](AZURE_AD_SETUP_GUIDE.md) for detailed instructions.
+Simply select "Microsoft Outlook" and click "Login with Microsoft" - no additional setup required!
+
+## User Experience
+
+### Adding a Microsoft Account
+1. Click "Add Email Account"
+2. Select "Microsoft Outlook" from the provider dropdown
+3. Enter your email address
+4. Click "Login with Microsoft"
+5. A secure Microsoft login window will open
+6. Sign in with your Microsoft credentials
+7. Grant permission for email access
+8. Done! Your emails will start syncing automatically
 
 ## Features (Planned)
 

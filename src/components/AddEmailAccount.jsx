@@ -18,8 +18,7 @@ function AddEmailAccount({ onAccountAdded }) {
         smtpHost: '',
         smtpPort: 587,
         imapTls: true,
-        smtpSecure: false,
-        clientId: ''
+        smtpSecure: false
     });
 
     useEffect(() => {
@@ -48,8 +47,7 @@ function AddEmailAccount({ onAccountAdded }) {
                     smtpHost: providerConfig.smtpHost || '',
                     smtpPort: providerConfig.smtpPort || 587,
                     imapTls: providerConfig.imapTls !== false,
-                    smtpSecure: providerConfig.smtpSecure || false,
-                    clientId: providerConfig.clientId || ''
+                    smtpSecure: providerConfig.smtpSecure || false
                 }));
             }
         } catch (error) {
@@ -81,6 +79,11 @@ function AddEmailAccount({ onAccountAdded }) {
                 providerType: providerConfig?.providerType || 'imap-smtp'
             };
 
+            // For OAuth providers, include the client ID from config
+            if (providerConfig?.providerType === 'outlook-graph') {
+                accountData.clientId = providerConfig.clientId;
+            }
+
             const result = await window.electronAPI.email.addAccount(accountData);
 
             if (result.success) {
@@ -94,8 +97,7 @@ function AddEmailAccount({ onAccountAdded }) {
                     smtpHost: '',
                     smtpPort: 587,
                     imapTls: true,
-                    smtpSecure: false,
-                    clientId: ''
+                    smtpSecure: false
                 });
                 setTimeout(() => {
                     setIsOpen(false);
@@ -184,27 +186,16 @@ function AddEmailAccount({ onAccountAdded }) {
                                         value={formData.password}
                                         onChange={handleInputChange}
                                         className="form-input"
-                                        required
+                                        required={selectedProviderConfig?.providerType !== 'outlook-graph'}
                                     />
                                 </div>
                             )}
 
                             {selectedProviderConfig?.providerType === 'outlook-graph' && (
-                                <div className="form-group">
-                                    <label htmlFor="clientId">Client ID</label>
-                                    <input
-                                        type="text"
-                                        id="clientId"
-                                        name="clientId"
-                                        value={formData.clientId}
-                                        onChange={handleInputChange}
-                                        className="form-input"
-                                        placeholder="Azure AD Application Client ID"
-                                        required
-                                    />
-                                    <div className="form-help">
-                                        You need to register an application in Azure AD and get a Client ID. 
-                                        Visit the <a href="https://portal.azure.com" target="_blank" rel="noopener noreferrer">Azure Portal</a> to create one.
+                                <div className="oauth-info">
+                                    <div className="oauth-message">
+                                        <strong>🔐 Secure OAuth Login</strong>
+                                        <p>Click "Add Account" to open a secure Microsoft login window. No passwords needed!</p>
                                     </div>
                                 </div>
                             )}
@@ -294,7 +285,10 @@ function AddEmailAccount({ onAccountAdded }) {
                                     className="btn btn-primary"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? 'Adding...' : 'Add Account'}
+                                    {isLoading ? 
+                                        (selectedProviderConfig?.providerType === 'outlook-graph' ? 'Logging in...' : 'Adding...') : 
+                                        (selectedProviderConfig?.providerType === 'outlook-graph' ? 'Login with Microsoft' : 'Add Account')
+                                    }
                                 </button>
                             </div>
                         </form>

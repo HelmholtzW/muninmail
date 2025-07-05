@@ -1,6 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
+
+// Load environment variables from .env file in development
+if (isDev) {
+    require('dotenv').config();
+}
 const EmailDatabase = require('./database');
 const EmailManager = require('./email-manager');
 const { ProviderConfigHelper } = require('./email-providers/provider-configs');
