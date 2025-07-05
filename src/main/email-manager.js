@@ -1,5 +1,6 @@
 const CredentialsManager = require('./credentials');
 const ImapSmtpProvider = require('./email-providers/ImapSmtpProvider');
+const GmailApiProvider = require('./email-providers/GmailApiProvider');
 const EmailDatabase = require('./database');
 
 class EmailManager {
@@ -213,8 +214,7 @@ class EmailManager {
             case 'imap-smtp':
                 return new ImapSmtpProvider(config);
             case 'gmail-api':
-                // Future implementation
-                throw new Error('Gmail API provider not yet implemented');
+                return new GmailApiProvider(config);
             case 'outlook-graph':
                 // Future implementation
                 throw new Error('Outlook Graph API provider not yet implemented');
@@ -238,6 +238,63 @@ class EmailManager {
             }
         }
         this.activeProviders.clear();
+    }
+
+    // Gmail OAuth2 specific methods
+    async getGmailAuthUrl(accountData) {
+        try {
+            const provider = new GmailApiProvider(accountData);
+            const authUrl = await provider.getAuthUrl();
+            return { success: true, authUrl };
+        } catch (error) {
+            console.error('Error getting Gmail auth URL:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async completeGmailAuth(accountData, authCode) {
+        try {
+            const provider = new GmailApiProvider(accountData);
+            const tokens = await provider.getTokensFromCode(authCode);
+
+            // Update account data with tokens
+            const completeConfig = {
+                ...accountData,
+                accessToken: tokens.access_token,
+                refreshToken: tokens.refresh_token
+            };
+
+            // Save the complete configuration
+            const result = await this.addAccount(completeConfig);
+            return result;
+        } catch (error) {
+            console.error('Error completing Gmail auth:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    async refreshGmailTokens(accountId) {
+        try {
+            const provider = await this.getProvider(accountId);
+            if (provider.constructor.name !== 'GmailApiProvider') {
+                throw new Error('Not a Gmail API account');
+            }
+
+            const newTokens = await provider.refreshAccessToken();
+            
+            // Update stored credentials
+            const credentials = await this.credentialsManager.getCredentials(accountId);
+            credentials.accessToken = newTokens.access_token;
+            if (newTokens.refresh_token) {
+                credentials.refreshToken = newTokens.refresh_token;
+            }
+            
+            await this.credentialsManager.saveCredentials(accountId, credentials);
+            return { success: true, tokens: newTokens };
+        } catch (error) {
+            console.error('Error refreshing Gmail tokens:', error);
+            return { success: false, error: error.message };
+        }
     }
 }
 

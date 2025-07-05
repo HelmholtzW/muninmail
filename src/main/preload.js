@@ -27,6 +27,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
         // Provider Configurations
         getProviderConfigs: () => ipcRenderer.invoke('email-get-provider-configs'),
-        getProviderConfig: (providerKey) => ipcRenderer.invoke('email-get-provider-config', providerKey)
+        getProviderConfig: (providerKey) => ipcRenderer.invoke('email-get-provider-config', providerKey),
+
+        // Gmail OAuth2
+        gmail: {
+            getAuthUrl: (accountData) => ipcRenderer.invoke('gmail-get-auth-url', accountData),
+            completeAuth: (accountData, authCode) => ipcRenderer.invoke('gmail-complete-auth', accountData, authCode),
+            refreshTokens: (accountId) => ipcRenderer.invoke('gmail-refresh-tokens', accountId)
+        }
     }
 }); 

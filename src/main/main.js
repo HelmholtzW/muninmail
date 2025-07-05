@@ -216,4 +216,32 @@ ipcMain.handle('email-get-provider-config', async (event, providerKey) => {
         console.error('Error getting provider config:', error);
         return null;
     }
+});
+
+// Gmail OAuth2 IPC handlers
+ipcMain.handle('gmail-get-auth-url', async (event, accountData) => {
+    try {
+        return await emailManager.getGmailAuthUrl(accountData);
+    } catch (error) {
+        console.error('Error getting Gmail auth URL:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('gmail-complete-auth', async (event, accountData, authCode) => {
+    try {
+        return await emailManager.completeGmailAuth(accountData, authCode);
+    } catch (error) {
+        console.error('Error completing Gmail auth:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('gmail-refresh-tokens', async (event, accountId) => {
+    try {
+        return await emailManager.refreshGmailTokens(accountId);
+    } catch (error) {
+        console.error('Error refreshing Gmail tokens:', error);
+        return { success: false, error: error.message };
+    }
 }); 

@@ -181,3 +181,25 @@
 .btn-secondary:hover {
     background-color: #7f8c8d;
 }
+
+.oauth-code-section {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #3498db;
+}
+
+.oauth-code-section .form-group {
+    margin-bottom: 15px;
+}
+
+.oauth-code-section label {
+    font-weight: 600;
+    color: #3498db;
+}
+
+.oauth-code-section .btn {
+    width: 100%;
+    margin-top: 10px;
+}

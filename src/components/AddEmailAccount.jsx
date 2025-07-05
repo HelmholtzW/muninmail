@@ -1,6 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import './AddEmailAccount.css';
 
+// OAuth Code Input Component
+function OAuthCodeInput({ onCodeSubmit, isLoading }) {
+    const [authCode, setAuthCode] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (authCode.trim()) {
+            onCodeSubmit(authCode.trim());
+        }
+    };
+
+    return (
+        <div className="oauth-code-section">
+            <div className="form-group">
+                <label htmlFor="authCode">Authorization Code</label>
+                <input
+                    type="text"
+                    id="authCode"
+                    value={authCode}
+                    onChange={(e) => setAuthCode(e.target.value)}
+                    className="form-input"
+                    placeholder="Paste the authorization code from Google"
+                    required
+                />
+            </div>
+            <button
+                type="button"
+                onClick={handleSubmit}
+                className="btn btn-primary"
+                disabled={isLoading || !authCode.trim()}
+            >
+                {isLoading ? 'Completing...' : 'Complete Authorization'}
+            </button>
+        </div>
+    );
+}
+
 function AddEmailAccount({ onAccountAdded }) {
     const [isOpen, setIsOpen] = useState(false);
     const [providers, setProviders] = useState([]);
@@ -18,7 +55,15 @@ function AddEmailAccount({ onAccountAdded }) {
         smtpHost: '',
         smtpPort: 587,
         imapTls: true,
-        smtpSecure: false
+        smtpSecure: false,
+        clientId: '',
+        clientSecret: ''
+    });
+
+    const [oauthFlow, setOauthFlow] = useState({
+        isActive: false,
+        authUrl: '',
+        waitingForCode: false
     });
 
     useEffect(() => {
@@ -36,6 +81,7 @@ function AddEmailAccount({ onAccountAdded }) {
 
     const handleProviderChange = async (providerKey) => {
         setSelectedProvider(providerKey);
+        setOauthFlow({ isActive: false, authUrl: '', waitingForCode: false });
 
         try {
             const providerConfig = await window.electronAPI.email.getProviderConfig(providerKey);
@@ -47,7 +93,9 @@ function AddEmailAccount({ onAccountAdded }) {
                     smtpHost: providerConfig.smtpHost || '',
                     smtpPort: providerConfig.smtpPort || 587,
                     imapTls: providerConfig.imapTls !== false,
-                    smtpSecure: providerConfig.smtpSecure || false
+                    smtpSecure: providerConfig.smtpSecure || false,
+                    clientId: providerConfig.clientId || '',
+                    clientSecret: providerConfig.clientSecret || ''
                 }));
             }
         } catch (error) {
@@ -63,8 +111,106 @@ function AddEmailAccount({ onAccountAdded }) {
         }));
     };
 
+    const handleGmailOAuth = async () => {
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const accountData = {
+                email: formData.email,
+                clientId: formData.clientId,
+                clientSecret: formData.clientSecret,
+                redirectUri: 'http://localhost:3000/oauth/callback',
+                providerType: 'gmail-api'
+            };
+
+            const result = await window.electronAPI.email.gmail.getAuthUrl(accountData);
+
+            if (result.success) {
+                setOauthFlow({
+                    isActive: true,
+                    authUrl: result.authUrl,
+                    waitingForCode: true
+                });
+                
+                // Open the auth URL in the default browser
+                window.open(result.authUrl, '_blank');
+                setSuccess('Please complete the authorization in your browser and then paste the authorization code below.');
+            } else {
+                setError(result.error || 'Failed to get authorization URL');
+            }
+        } catch (error) {
+            console.error('Error starting Gmail OAuth:', error);
+            setError('Failed to start Gmail authorization. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleOAuthCodeSubmit = async (authCode) => {
+        setIsLoading(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const accountData = {
+                email: formData.email,
+                displayName: formData.displayName || formData.email,
+                clientId: formData.clientId,
+                clientSecret: formData.clientSecret,
+                redirectUri: 'http://localhost:3000/oauth/callback',
+                providerType: 'gmail-api'
+            };
+
+            const result = await window.electronAPI.email.gmail.completeAuth(accountData, authCode);
+
+            if (result.success) {
+                setSuccess('Gmail account added successfully!');
+                resetForm();
+                setTimeout(() => {
+                    setIsOpen(false);
+                    setSuccess('');
+                    if (onAccountAdded) {
+                        onAccountAdded();
+                    }
+                }, 2000);
+            } else {
+                setError(result.error || 'Failed to complete authorization');
+            }
+        } catch (error) {
+            console.error('Error completing Gmail OAuth:', error);
+            setError('Failed to complete authorization. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            email: '',
+            password: '',
+            displayName: '',
+            imapHost: '',
+            imapPort: 993,
+            smtpHost: '',
+            smtpPort: 587,
+            imapTls: true,
+            smtpSecure: false,
+            clientId: '',
+            clientSecret: ''
+        });
+        setOauthFlow({ isActive: false, authUrl: '', waitingForCode: false });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (selectedProvider === 'gmail-api') {
+            handleGmailOAuth();
+            return;
+        }
+
         setIsLoading(true);
         setError('');
         setSuccess('');
@@ -80,17 +226,7 @@ function AddEmailAccount({ onAccountAdded }) {
 
             if (result.success) {
                 setSuccess('Account added successfully!');
-                setFormData({
-                    email: '',
-                    password: '',
-                    displayName: '',
-                    imapHost: '',
-                    imapPort: 993,
-                    smtpHost: '',
-                    smtpPort: 587,
-                    imapTls: true,
-                    smtpSecure: false
-                });
+                resetForm();
                 setTimeout(() => {
                     setIsOpen(false);
                     setSuccess('');
@@ -168,31 +304,85 @@ function AddEmailAccount({ onAccountAdded }) {
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    required
-                                />
-                            </div>
+                            {selectedProvider === 'gmail-api' ? (
+                                <>
+                                    <div className="form-group">
+                                        <label htmlFor="clientId">Google Client ID</label>
+                                        <input
+                                            type="text"
+                                            id="clientId"
+                                            name="clientId"
+                                            value={formData.clientId}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                            required
+                                            placeholder="Your Google OAuth Client ID"
+                                        />
+                                    </div>
 
-                            <div className="form-group">
-                                <label htmlFor="displayName">Display Name (optional)</label>
-                                <input
-                                    type="text"
-                                    id="displayName"
-                                    name="displayName"
-                                    value={formData.displayName}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    placeholder="Your Name"
-                                />
-                            </div>
+                                    <div className="form-group">
+                                        <label htmlFor="clientSecret">Google Client Secret</label>
+                                        <input
+                                            type="password"
+                                            id="clientSecret"
+                                            name="clientSecret"
+                                            value={formData.clientSecret}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                            required
+                                            placeholder="Your Google OAuth Client Secret"
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="displayName">Display Name (optional)</label>
+                                        <input
+                                            type="text"
+                                            id="displayName"
+                                            name="displayName"
+                                            value={formData.displayName}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                            placeholder="Your Name"
+                                        />
+                                    </div>
+
+                                    {oauthFlow.waitingForCode && (
+                                        <OAuthCodeInput 
+                                            onCodeSubmit={handleOAuthCodeSubmit}
+                                            isLoading={isLoading}
+                                        />
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <div className="form-group">
+                                        <label htmlFor="password">Password</label>
+                                        <input
+                                            type="password"
+                                            id="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label htmlFor="displayName">Display Name (optional)</label>
+                                        <input
+                                            type="text"
+                                            id="displayName"
+                                            name="displayName"
+                                            value={formData.displayName}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                            placeholder="Your Name"
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             {selectedProvider === 'custom' && (
                                 <>
@@ -264,9 +454,12 @@ function AddEmailAccount({ onAccountAdded }) {
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
-                                    disabled={isLoading}
+                                    disabled={isLoading || oauthFlow.waitingForCode}
                                 >
-                                    {isLoading ? 'Adding...' : 'Add Account'}
+                                    {isLoading ? 
+                                        (selectedProvider === 'gmail-api' ? 'Authorizing...' : 'Adding...') : 
+                                        (selectedProvider === 'gmail-api' ? 'Authorize with Google' : 'Add Account')
+                                    }
                                 </button>
                             </div>
                         </form>

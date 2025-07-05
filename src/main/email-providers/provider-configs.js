@@ -44,6 +44,14 @@ const PROVIDER_CONFIGS = {
         smtpSecure: false,
         note: 'For iCloud, you need to use App Passwords instead of your regular password'
     },
+    'gmail-api': {
+        name: 'Gmail (OAuth2)',
+        providerType: 'gmail-api',
+        clientId: '',
+        clientSecret: '',
+        redirectUri: 'http://localhost:3000/oauth/callback',
+        note: 'Use Gmail API with OAuth2 authentication. You need to create a Google Cloud project and enable Gmail API.'
+    },
     custom: {
         name: 'Custom IMAP/SMTP',
         providerType: 'imap-smtp',
