@@ -43,13 +43,32 @@ npm run build:electron
 
 This project is being developed in phases as outlined in PROJECT_PLAN.md:
 
-- [x] **Phase 1.1**: Basic Electron + React setup ← **Current**
+- [x] **Phase 1.1**: Basic Electron + React setup
 - [x] **Phase 1.2**: SQLite integration and database schema
 - [x] **Phase 1.3**: IMAP/SMTP email functionality
+- [x] **Phase 5.1**: Outlook Graph API integration ← **Current**
 - [ ] **Phase 2**: AI processing pipeline
 - [ ] **Phase 3**: Collaborative UI & vector search
 - [ ] **Phase 4**: Intelligent agent
-- [ ] **Phase 5**: Native integrations & refinements
+- [ ] **Phase 5.2**: Gmail API integration & other refinements
+
+## Supported Email Providers
+
+### Traditional IMAP/SMTP
+- **Gmail** (requires App Password)
+- **Outlook/Hotmail** (requires IMAP enabled)
+- **Yahoo Mail** (requires App Password)
+- **iCloud Mail** (requires App Password)
+- **Custom IMAP/SMTP servers**
+
+### Modern OAuth Integration
+- **Microsoft Outlook** (via Microsoft Graph API)
+  - ✅ Secure OAuth 2.0 authentication
+  - ✅ No passwords required
+  - ✅ Enhanced security and features
+  - ✅ Automatic token refresh
+
+To use Outlook with Graph API, you'll need to set up an Azure AD application. See [AZURE_AD_SETUP_GUIDE.md](AZURE_AD_SETUP_GUIDE.md) for detailed instructions.
 
 ## Features (Planned)
 

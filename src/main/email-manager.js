@@ -1,5 +1,6 @@
 const CredentialsManager = require('./credentials');
 const ImapSmtpProvider = require('./email-providers/ImapSmtpProvider');
+const OutlookGraphProvider = require('./email-providers/OutlookGraphProvider');
 const EmailDatabase = require('./database');
 
 class EmailManager {
@@ -216,8 +217,7 @@ class EmailManager {
                 // Future implementation
                 throw new Error('Gmail API provider not yet implemented');
             case 'outlook-graph':
-                // Future implementation
-                throw new Error('Outlook Graph API provider not yet implemented');
+                return new OutlookGraphProvider(config);
             default:
                 throw new Error(`Unknown provider type: ${config.providerType}`);
         }

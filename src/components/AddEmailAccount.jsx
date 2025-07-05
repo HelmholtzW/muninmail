@@ -18,7 +18,8 @@ function AddEmailAccount({ onAccountAdded }) {
         smtpHost: '',
         smtpPort: 587,
         imapTls: true,
-        smtpSecure: false
+        smtpSecure: false,
+        clientId: ''
     });
 
     useEffect(() => {
@@ -47,7 +48,8 @@ function AddEmailAccount({ onAccountAdded }) {
                     smtpHost: providerConfig.smtpHost || '',
                     smtpPort: providerConfig.smtpPort || 587,
                     imapTls: providerConfig.imapTls !== false,
-                    smtpSecure: providerConfig.smtpSecure || false
+                    smtpSecure: providerConfig.smtpSecure || false,
+                    clientId: providerConfig.clientId || ''
                 }));
             }
         } catch (error) {
@@ -70,10 +72,13 @@ function AddEmailAccount({ onAccountAdded }) {
         setSuccess('');
 
         try {
+            // Get the selected provider config to determine the provider type
+            const providerConfig = await window.electronAPI.email.getProviderConfig(selectedProvider);
+            
             const accountData = {
                 ...formData,
                 displayName: formData.displayName || formData.email,
-                providerType: 'imap-smtp'
+                providerType: providerConfig?.providerType || 'imap-smtp'
             };
 
             const result = await window.electronAPI.email.addAccount(accountData);
@@ -89,7 +94,8 @@ function AddEmailAccount({ onAccountAdded }) {
                     smtpHost: '',
                     smtpPort: 587,
                     imapTls: true,
-                    smtpSecure: false
+                    smtpSecure: false,
+                    clientId: ''
                 });
                 setTimeout(() => {
                     setIsOpen(false);
@@ -168,18 +174,40 @@ function AddEmailAccount({ onAccountAdded }) {
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    required
-                                />
-                            </div>
+                            {selectedProviderConfig?.providerType !== 'outlook-graph' && (
+                                <div className="form-group">
+                                    <label htmlFor="password">Password</label>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        required
+                                    />
+                                </div>
+                            )}
+
+                            {selectedProviderConfig?.providerType === 'outlook-graph' && (
+                                <div className="form-group">
+                                    <label htmlFor="clientId">Client ID</label>
+                                    <input
+                                        type="text"
+                                        id="clientId"
+                                        name="clientId"
+                                        value={formData.clientId}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        placeholder="Azure AD Application Client ID"
+                                        required
+                                    />
+                                    <div className="form-help">
+                                        You need to register an application in Azure AD and get a Client ID. 
+                                        Visit the <a href="https://portal.azure.com" target="_blank" rel="noopener noreferrer">Azure Portal</a> to create one.
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label htmlFor="displayName">Display Name (optional)</label>

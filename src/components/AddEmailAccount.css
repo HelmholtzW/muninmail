@@ -105,6 +105,22 @@
     border-color: #e74c3c;
 }
 
+.form-help {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.form-help a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.form-help a:hover {
+    text-decoration: underline;
+}
+
 .provider-note {
     margin-top: 8px;
     padding: 10px;

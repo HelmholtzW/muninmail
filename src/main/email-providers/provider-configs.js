@@ -22,6 +22,13 @@ const PROVIDER_CONFIGS = {
         smtpSecure: false,
         note: 'For Outlook, you may need to enable IMAP in your account settings'
     },
+    outlookGraph: {
+        name: 'Outlook (Microsoft Graph API)',
+        providerType: 'outlook-graph',
+        clientId: '00000000-0000-0000-0000-000000000000', // Will be replaced with actual client ID
+        scopes: ['https://graph.microsoft.com/Mail.Read', 'https://graph.microsoft.com/Mail.Send'],
+        note: 'Modern OAuth authentication with Microsoft Graph API. Provides better security and features than IMAP/SMTP. You need to register an application in Azure AD to get a client ID.'
+    },
     yahoo: {
         name: 'Yahoo Mail',
         providerType: 'imap-smtp',
