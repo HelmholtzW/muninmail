@@ -24,28 +24,7 @@ const PROVIDER_CONFIGS = {
         smtpSecure: false,
         note: 'For Outlook, you may need to enable IMAP in your account settings'
     },
-    yahoo: {
-        name: 'Yahoo Mail',
-        providerType: 'imap-smtp',
-        imapHost: 'imap.mail.yahoo.com',
-        imapPort: 993,
-        imapTls: true,
-        smtpHost: 'smtp.mail.yahoo.com',
-        smtpPort: 587,
-        smtpSecure: false,
-        note: 'For Yahoo, you need to use App Passwords instead of your regular password'
-    },
-    icloud: {
-        name: 'iCloud Mail',
-        providerType: 'imap-smtp',
-        imapHost: 'imap.mail.me.com',
-        imapPort: 993,
-        imapTls: true,
-        smtpHost: 'smtp.mail.me.com',
-        smtpPort: 587,
-        smtpSecure: false,
-        note: 'For iCloud, you need to use App Passwords instead of your regular password'
-    },
+    // Removed Yahoo and iCloud to simplify options. Only Gmail, Outlook and Custom remain.
     custom: {
         name: 'Custom IMAP/SMTP',
         providerType: 'imap-smtp',
