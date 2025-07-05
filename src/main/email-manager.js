@@ -14,15 +14,23 @@ class EmailManager {
         try {
             const accountId = this.generateAccountId(accountData.email);
 
-            // Validate required fields
-            if (!accountData.email || !accountData.password) {
-                throw new Error('Email and password are required');
+            // Validate required fields (allow either password or OAuth2)
+            const hasPassword = Boolean(accountData.password);
+            const hasOAuth2 = Boolean(accountData.accessToken);
+
+            if (!accountData.email || (!hasPassword && !hasOAuth2)) {
+                throw new Error('Email and either password or OAuth2 credentials (accessToken) are required');
             }
 
             // Create provider config
             const providerConfig = {
                 email: accountData.email,
+                // Credentials – may include password or OAuth2 tokens
                 password: accountData.password,
+                accessToken: accountData.accessToken,
+                refreshToken: accountData.refreshToken,
+                clientId: accountData.clientId,
+                clientSecret: accountData.clientSecret,
                 imapHost: accountData.imapHost,
                 imapPort: accountData.imapPort || 993,
                 imapTls: accountData.imapTls !== false,
