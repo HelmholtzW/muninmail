@@ -3,16 +3,13 @@ const LLM_PROVIDER_CONFIGS = {
     openai: {
         name: 'OpenAI',
         provider: 'openai',
-        defaultModels: [
-            'gpt-4',
-            'gpt-4-turbo',
-            'gpt-3.5-turbo',
-            'gpt-3.5-turbo-16k'
-        ],
+        defaultModel: 'gpt-4',
         defaultBaseUrl: 'https://api.openai.com/v1',
         requiresApiKey: true,
         supportsCustomBaseUrl: true,
-        description: 'OpenAI GPT models including GPT-4 and GPT-3.5-turbo',
+        description: 'OpenAI GPT models - specify any OpenAI model name',
+        modelLabel: 'Model Name',
+        modelPlaceholder: 'e.g., gpt-4, gpt-4-turbo, gpt-3.5-turbo',
         apiKeyLabel: 'OpenAI API Key',
         apiKeyPlaceholder: 'sk-...',
         baseUrlLabel: 'Base URL (optional)',
@@ -21,52 +18,39 @@ const LLM_PROVIDER_CONFIGS = {
     anthropic: {
         name: 'Anthropic',
         provider: 'anthropic',
-        defaultModels: [
-            'claude-3-opus-20240229',
-            'claude-3-sonnet-20240229',
-            'claude-3-haiku-20240307',
-            'claude-2.1',
-            'claude-2.0'
-        ],
+        defaultModel: 'claude-3-sonnet-20240229',
         defaultBaseUrl: 'https://api.anthropic.com',
         requiresApiKey: true,
         supportsCustomBaseUrl: false,
-        description: 'Anthropic Claude models',
+        description: 'Anthropic Claude models - specify any Claude model name',
+        modelLabel: 'Model Name',
+        modelPlaceholder: 'e.g., claude-3-sonnet-20240229, claude-3-opus-20240229',
         apiKeyLabel: 'Anthropic API Key',
         apiKeyPlaceholder: 'sk-ant-...'
     },
     google: {
         name: 'Google AI',
         provider: 'google',
-        defaultModels: [
-            'gemini-pro',
-            'gemini-pro-vision',
-            'gemini-1.5-pro',
-            'gemini-1.5-flash'
-        ],
+        defaultModel: 'gemini-pro',
         defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1',
         requiresApiKey: true,
         supportsCustomBaseUrl: false,
-        description: 'Google Gemini models',
+        description: 'Google Gemini models - specify any Gemini model name',
+        modelLabel: 'Model Name',
+        modelPlaceholder: 'e.g., gemini-pro, gemini-1.5-pro, gemini-1.5-flash',
         apiKeyLabel: 'Google AI API Key',
         apiKeyPlaceholder: 'AIza...'
     },
     ollama: {
         name: 'Ollama',
         provider: 'ollama',
-        defaultModels: [
-            'llama2',
-            'llama2:13b',
-            'llama2:70b',
-            'codellama',
-            'mistral',
-            'mixtral',
-            'phi'
-        ],
+        defaultModel: 'llama2',
         defaultBaseUrl: 'http://localhost:11434',
         requiresApiKey: false,
         supportsCustomBaseUrl: true,
-        description: 'Local Ollama models',
+        description: 'Local Ollama models - specify any installed model name',
+        modelLabel: 'Model Name',
+        modelPlaceholder: 'e.g., llama2, mistral, codellama, phi',
         apiKeyLabel: 'API Key (optional)',
         apiKeyPlaceholder: 'Leave empty for local Ollama',
         baseUrlLabel: 'Ollama Base URL',
@@ -121,20 +105,16 @@ class LLMConfigHelper {
 
     static getDefaultModelForProvider(providerKey) {
         const providerConfig = this.getProviderConfig(providerKey);
-        return providerConfig?.defaultModels[0] || '';
+        return providerConfig?.defaultModel || '';
     }
 
     static isModelCompatible(providerKey, modelName) {
         const providerConfig = this.getProviderConfig(providerKey);
         if (!providerConfig) return false;
 
-        // For providers like Ollama that support custom models, we're more lenient
-        if (providerKey === 'ollama') {
-            return true;
-        }
-
-        // For other providers, check if it's in the default models list
-        return providerConfig.defaultModels.includes(modelName);
+        // All providers now support custom model names
+        // Just check that the model name is not empty
+        return modelName && modelName.trim().length > 0;
     }
 }
 

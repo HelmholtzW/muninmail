@@ -47,7 +47,7 @@ const LLMConfiguration = ({ onConfigAdded }) => {
         setFormData({
             ...formData,
             provider: providerKey,
-            modelName: provider?.defaultModels[0] || '',
+            modelName: provider?.defaultModel || '',
             baseUrl: provider?.defaultBaseUrl || '',
             apiKey: provider?.requiresApiKey ? '' : 'not-required'
         });
@@ -205,21 +205,16 @@ const LLMConfiguration = ({ onConfigAdded }) => {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="modelName">Model:</label>
-                                <select
+                                <label htmlFor="modelName">{selectedProvider.modelLabel}:</label>
+                                <input
+                                    type="text"
                                     id="modelName"
                                     name="modelName"
                                     value={formData.modelName}
                                     onChange={handleInputChange}
+                                    placeholder={selectedProvider.modelPlaceholder}
                                     required
-                                >
-                                    <option value="">Select a model...</option>
-                                    {selectedProvider.defaultModels.map(model => (
-                                        <option key={model} value={model}>
-                                            {model}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
 
                             {selectedProvider.requiresApiKey && (
