@@ -3,6 +3,7 @@ const PROVIDER_CONFIGS = {
     gmail: {
         name: 'Gmail',
         providerType: 'imap-smtp',
+        oauthProvider: 'gmail',
         imapHost: 'imap.gmail.com',
         imapPort: 993,
         imapTls: true,
@@ -14,6 +15,7 @@ const PROVIDER_CONFIGS = {
     outlook: {
         name: 'Outlook/Hotmail',
         providerType: 'imap-smtp',
+        oauthProvider: 'outlook',
         imapHost: 'outlook.office365.com',
         imapPort: 993,
         imapTls: true,

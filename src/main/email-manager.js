@@ -14,12 +14,9 @@ class EmailManager {
         try {
             const accountId = this.generateAccountId(accountData.email);
 
-            // Validate required fields (allow either password or OAuth2)
-            const hasPassword = Boolean(accountData.password);
-            const hasOAuth2 = Boolean(accountData.accessToken);
-
-            if (!accountData.email || (!hasPassword && !hasOAuth2)) {
-                throw new Error('Email and either password or OAuth2 credentials (accessToken) are required');
+            // Basic validation – email is mandatory
+            if (!accountData.email) {
+                throw new Error('Email is required');
             }
 
             // Create provider config
@@ -37,8 +34,30 @@ class EmailManager {
                 smtpHost: accountData.smtpHost,
                 smtpPort: accountData.smtpPort || 587,
                 smtpSecure: accountData.smtpSecure || false,
-                providerType: accountData.providerType || 'imap-smtp'
+                providerType: accountData.providerType || 'imap-smtp',
+                oauthProvider: accountData.oauthProvider // may be undefined
             };
+
+            // If the provider supports OAuth and no credentials provided, start OAuth flow automatically
+            if (providerConfig.oauthProvider && !providerConfig.password && !providerConfig.accessToken) {
+                try {
+                    const { getTokensForProvider } = require('./oauth');
+                    console.log(`Starting OAuth flow for provider: ${providerConfig.oauthProvider}`);
+                    const tokens = await getTokensForProvider(providerConfig.oauthProvider);
+                    providerConfig.accessToken = tokens.accessToken;
+                    providerConfig.refreshToken = tokens.refreshToken;
+
+                    if (providerConfig.oauthProvider === 'gmail') {
+                        providerConfig.clientId = process.env.GOOGLE_CLIENT_ID;
+                        providerConfig.clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+                    } else if (providerConfig.oauthProvider === 'outlook') {
+                        providerConfig.clientId = process.env.OUTLOOK_CLIENT_ID;
+                        providerConfig.clientSecret = process.env.OUTLOOK_CLIENT_SECRET;
+                    }
+                } catch (oauthErr) {
+                    throw new Error(`OAuth flow failed: ${oauthErr.message}`);
+                }
+            }
 
             // Test connection before saving
             const provider = this.createProvider(providerConfig);
