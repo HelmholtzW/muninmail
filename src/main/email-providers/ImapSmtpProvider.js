@@ -12,10 +12,20 @@ class ImapSmtpProvider extends BaseEmailProvider {
         this.setupSmtp();
     }
 
+    buildXoauth2Token(user, accessToken) {
+        // Generates a base64 encoded XOAUTH2 token string
+        const authString = [
+            `user=${user}`,
+            `auth=Bearer ${accessToken}`,
+            '',
+            ''
+        ].join('\x01');
+        return Buffer.from(authString).toString('base64');
+    }
+
     setupImap() {
-        this.imapClient = new Imap({
+        const imapConfig = {
             user: this.config.email,
-            password: this.config.password,
             host: this.config.imapHost,
             port: this.config.imapPort || 993,
             tls: this.config.imapTls !== false,
@@ -23,7 +33,15 @@ class ImapSmtpProvider extends BaseEmailProvider {
             tlsOptions: {
                 rejectUnauthorized: false
             }
-        });
+        };
+
+        if (this.config.password) {
+            imapConfig.password = this.config.password;
+        } else if (this.config.accessToken) {
+            imapConfig.xoauth2 = this.buildXoauth2Token(this.config.email, this.config.accessToken);
+        }
+
+        this.imapClient = new Imap(imapConfig);
 
         this.imapClient.on('error', (err) => {
             console.error('IMAP error:', err);
@@ -36,15 +54,29 @@ class ImapSmtpProvider extends BaseEmailProvider {
     }
 
     setupSmtp() {
-        this.smtpTransporter = nodemailer.createTransport({
+        let transportConfig = {
             host: this.config.smtpHost,
             port: this.config.smtpPort || 587,
-            secure: this.config.smtpSecure || false,
-            auth: {
+            secure: this.config.smtpSecure || false
+        };
+
+        if (this.config.password) {
+            transportConfig.auth = {
                 user: this.config.email,
                 pass: this.config.password
-            }
-        });
+            };
+        } else if (this.config.accessToken) {
+            transportConfig.auth = {
+                type: 'OAuth2',
+                user: this.config.email,
+                accessToken: this.config.accessToken,
+                refreshToken: this.config.refreshToken,
+                clientId: this.config.clientId,
+                clientSecret: this.config.clientSecret
+            };
+        }
+
+        this.smtpTransporter = nodemailer.createTransport(transportConfig);
     }
 
     async connect() {

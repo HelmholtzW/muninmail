@@ -28,5 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
         // Provider Configurations
         getProviderConfigs: () => ipcRenderer.invoke('email-get-provider-configs'),
         getProviderConfig: (providerKey) => ipcRenderer.invoke('email-get-provider-config', providerKey)
+    },
+
+    // OAuth helper
+    oauth: {
+        login: (providerKey) => ipcRenderer.invoke('oauth-login', providerKey)
     }
 }); 

@@ -4,6 +4,7 @@ const isDev = require('electron-is-dev');
 const EmailDatabase = require('./database');
 const EmailManager = require('./email-manager');
 const { ProviderConfigHelper } = require('./email-providers/provider-configs');
+const { getTokensForProvider } = require('./oauth');
 
 let mainWindow;
 let database;
@@ -215,5 +216,16 @@ ipcMain.handle('email-get-provider-config', async (event, providerKey) => {
     } catch (error) {
         console.error('Error getting provider config:', error);
         return null;
+    }
+});
+
+// OAuth handlers – allows renderer to start OAuth login flow (Gmail/Outlook)
+ipcMain.handle('oauth-login', async (event, providerKey) => {
+    try {
+        const tokens = await getTokensForProvider(providerKey);
+        return { success: true, tokens };
+    } catch (error) {
+        console.error('Error during OAuth login:', error);
+        return { success: false, error: error.message };
     }
 }); 

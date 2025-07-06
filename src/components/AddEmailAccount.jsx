@@ -63,6 +63,11 @@ function AddEmailAccount({ onAccountAdded }) {
         }));
     };
 
+    const providerRequiresPassword = (providerKey) => {
+        // Custom IMAP/SMTP requires user-supplied password
+        return providerKey === 'custom';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -73,7 +78,10 @@ function AddEmailAccount({ onAccountAdded }) {
             const accountData = {
                 ...formData,
                 displayName: formData.displayName || formData.email,
-                providerType: 'imap-smtp'
+                providerType: 'imap-smtp',
+                oauthProvider: selectedProvider !== 'custom' ? selectedProvider : undefined,
+                // If password not required, clear it to trigger OAuth in main process
+                password: providerRequiresPassword(selectedProvider) ? formData.password : ''
             };
 
             const result = await window.electronAPI.email.addAccount(accountData);
@@ -168,18 +176,20 @@ function AddEmailAccount({ onAccountAdded }) {
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className="form-input"
-                                    required
-                                />
-                            </div>
+                            {providerRequiresPassword(selectedProvider) && (
+                                <div className="form-group">
+                                    <label htmlFor="password">Password</label>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label htmlFor="displayName">Display Name (optional)</label>

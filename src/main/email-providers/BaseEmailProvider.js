@@ -43,8 +43,12 @@ class BaseEmailProvider {
             throw new Error('Email address is required');
         }
 
-        if (!this.config.password) {
-            throw new Error('Password is required');
+        // Allow either a traditional password OR OAuth2 credentials
+        const hasPassword = Boolean(this.config.password);
+        const hasOAuth2 = Boolean(this.config.accessToken);
+
+        if (!hasPassword && !hasOAuth2) {
+            throw new Error('Either a password or an OAuth2 accessToken is required');
         }
 
         return true;
